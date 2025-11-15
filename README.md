@@ -35,6 +35,16 @@ npm run preview
 
 The optimized bundle is emitted to `dist/` and can be deployed to any static host.
 
+### 4. Deploy to GitHub Pages
+
+This repo is pre-wired for GitHub Pages via the workflow in `.github/workflows/deploy.yml`.
+
+1. Push your changes to the `master` branch on GitHub.
+2. In the repository settings, enable **Pages** and choose **GitHub Actions** as the source (the default workflow will appear automatically).
+3. The workflow installs dependencies, runs `npm run build` with `GITHUB_PAGES=true`, and publishes `dist/` to Pages.
+
+> **Note:** If you fork or rename the repository, update the `repoName` constant in `vite.config.ts` so the Vite `base` path matches your Pages URL (e.g., `/your-repo-name/`).
+
 ## Tech stack
 
 - [Vite](https://vitejs.dev/) + React + TypeScript
