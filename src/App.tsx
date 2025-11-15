@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Box, Container, SimpleGrid, Stack } from '@mantine/core'
+import { Affix, Box, Button, Container, SimpleGrid, Stack } from '@mantine/core'
 import { MatchHeader } from './components/MatchHeader'
 import { PlayerScoreCard } from './components/PlayerScoreCard'
 import { MatchSettingsCard } from './components/MatchSettingsCard'
@@ -14,6 +14,7 @@ import type { MatchConfig } from './utils/match'
 function App() {
   const { match, history, gamesNeeded, matchIsLive, actions } = useMatchController()
   const { colorScheme, pageBg, cardBg, mutedText, toggleColorMode } = useThemeColors()
+  const [scoreOnlyMode, setScoreOnlyMode] = useState(false)
   const {
     handleNameChange,
     handlePointChange,
@@ -31,6 +32,8 @@ function App() {
     maxPoint: match.maxPoint,
     winByTwo: match.winByTwo,
   }
+
+  const handleScoreOnlyToggle = () => setScoreOnlyMode((previous) => !previous)
 
   const [displayElapsedMs, setDisplayElapsedMs] = useState(match.clockElapsedMs)
 
@@ -92,14 +95,18 @@ function App() {
     <Box style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}>
       <Container size="lg" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
         <Stack gap="lg">
-          <MatchHeader
-            cardBg={cardBg}
-            mutedText={mutedText}
-            onUndo={handleUndo}
-            onToggleColorMode={toggleColorMode}
-            colorScheme={colorScheme}
-            canUndo={history.length > 0}
-          />
+          {!scoreOnlyMode && (
+            <MatchHeader
+              cardBg={cardBg}
+              mutedText={mutedText}
+              onUndo={handleUndo}
+              onToggleColorMode={toggleColorMode}
+              colorScheme={colorScheme}
+              canUndo={history.length > 0}
+              scoreOnlyMode={scoreOnlyMode}
+              onToggleScoreOnly={handleScoreOnlyToggle}
+            />
+          )}
 
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
             {match.players.map((player, index) => {
@@ -125,41 +132,52 @@ function App() {
             })}
           </SimpleGrid>
 
-          <MatchSettingsCard
-            cardBg={cardBg}
-            mutedText={mutedText}
-            match={match}
-            onRaceToChange={handleRaceToChange}
-            onBestOfChange={handleBestOfChange}
-            onWinByTwoToggle={handleWinByTwoToggle}
-          />
+          {!scoreOnlyMode && (
+            <>
+              <MatchSettingsCard
+                cardBg={cardBg}
+                mutedText={mutedText}
+                match={match}
+                onRaceToChange={handleRaceToChange}
+                onBestOfChange={handleBestOfChange}
+                onWinByTwoToggle={handleWinByTwoToggle}
+              />
 
-          <MatchControlsCard
-            cardBg={cardBg}
-            onSwapEnds={handleSwapEnds}
-            onToggleServer={handleServerToggle}
-            onResetGame={handleResetGame}
-            onResetMatch={handleResetMatch}
-          />
+              <MatchControlsCard
+                cardBg={cardBg}
+                onSwapEnds={handleSwapEnds}
+                onToggleServer={handleServerToggle}
+                onResetGame={handleResetGame}
+                onResetMatch={handleResetMatch}
+              />
 
-          <MatchInsightsCard
-            cardBg={cardBg}
-            mutedText={mutedText}
-            match={match}
-            gamesNeeded={gamesNeeded}
-            matchIsLive={matchIsLive}
-            elapsedMs={displayElapsedMs}
-            clockRunning={match.clockRunning}
-            onToggleClock={handleClockToggle}
-          />
+              <MatchInsightsCard
+                cardBg={cardBg}
+                mutedText={mutedText}
+                match={match}
+                gamesNeeded={gamesNeeded}
+                matchIsLive={matchIsLive}
+                elapsedMs={displayElapsedMs}
+                clockRunning={match.clockRunning}
+                onToggleClock={handleClockToggle}
+              />
 
-          <GameHistoryCard
-            cardBg={cardBg}
-            mutedText={mutedText}
-            games={match.completedGames}
-          />
+              <GameHistoryCard
+                cardBg={cardBg}
+                mutedText={mutedText}
+                games={match.completedGames}
+              />
+            </>
+          )}
         </Stack>
       </Container>
+      {scoreOnlyMode && (
+        <Affix position={{ top: 16, right: 16 }}>
+          <Button size="sm" color="teal" onClick={handleScoreOnlyToggle}>
+            Show full view
+          </Button>
+        </Affix>
+      )}
     </Box>
   )
 }

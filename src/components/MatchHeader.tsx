@@ -18,6 +18,8 @@ interface MatchHeaderProps {
   onToggleColorMode: () => void
   colorScheme: MantineColorScheme
   canUndo: boolean
+  scoreOnlyMode: boolean
+  onToggleScoreOnly: () => void
 }
 
 export const MatchHeader = ({
@@ -27,6 +29,8 @@ export const MatchHeader = ({
   onToggleColorMode,
   colorScheme,
   canUndo,
+  scoreOnlyMode,
+  onToggleScoreOnly,
 }: MatchHeaderProps) => (
   <Card withBorder radius="lg" p="xl" style={{ backgroundColor: cardBg }} shadow="lg">
     <Stack gap="md">
@@ -37,28 +41,39 @@ export const MatchHeader = ({
             Keep a responsive, offline-friendly record of every rally. Scores stay in local storage so you can close the tab and resume anytime.
           </Text>
         </div>
-        <Group gap="sm">
-          <Tooltip label="Swap light / dark mode">
-            <ActionIcon
-              variant="outline"
-              size="lg"
-              onClick={onToggleColorMode}
-              aria-label="Toggle color scheme"
-            >
-              {colorScheme === 'light' ? <IconMoon size={20} /> : <IconSun size={20} />}
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Undo last change">
-            <Button
-              variant="light"
-              leftSection={<IconArrowBackUp size={18} />}
-              onClick={onUndo}
-              disabled={!canUndo}
-            >
-              Undo
-            </Button>
-          </Tooltip>
-        </Group>
+        <Stack gap="xs" align="flex-end" style={{ minWidth: '12rem' }}>
+          <Button
+            w="100%"
+            variant={scoreOnlyMode ? 'filled' : 'light'}
+            color={scoreOnlyMode ? 'teal' : 'gray'}
+            onClick={onToggleScoreOnly}
+            aria-pressed={scoreOnlyMode}
+          >
+            {scoreOnlyMode ? 'Show full view' : 'Score-only view'}
+          </Button>
+          <Group gap="sm" wrap="wrap" justify="flex-end">
+            <Tooltip label="Swap light / dark mode">
+              <ActionIcon
+                variant="outline"
+                size="lg"
+                onClick={onToggleColorMode}
+                aria-label="Toggle color scheme"
+              >
+                {colorScheme === 'light' ? <IconMoon size={20} /> : <IconSun size={20} />}
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Undo last change">
+              <Button
+                variant="light"
+                leftSection={<IconArrowBackUp size={18} />}
+                onClick={onUndo}
+                disabled={!canUndo}
+              >
+                Undo
+              </Button>
+            </Tooltip>
+          </Group>
+        </Stack>
       </Group>
     </Stack>
   </Card>
