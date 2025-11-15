@@ -146,17 +146,18 @@ function App() {
               onToggleClock={handleClockToggle}
             />
           )}
+
+          <ScoreOnlyOverlays
+            active={scoreOnlyMode}
+            mutedText={mutedText}
+            players={match.players}
+            server={match.server}
+            onExitScoreOnly={handleScoreOnlyToggle}
+            onSetServer={handleSetServer}
+            onToggleServer={handleServerToggle}
+          />
         </Stack>
       </Container>
-      <ScoreOnlyOverlays
-        active={scoreOnlyMode}
-        mutedText={mutedText}
-        players={match.players}
-        server={match.server}
-        onExitScoreOnly={handleScoreOnlyToggle}
-        onSetServer={handleSetServer}
-        onToggleServer={handleServerToggle}
-      />
     </Box>
   )
 }

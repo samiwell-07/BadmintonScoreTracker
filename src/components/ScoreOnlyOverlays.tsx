@@ -31,34 +31,32 @@ export const ScoreOnlyOverlays = ({
           Show full view
         </Button>
       </Affix>
-      <Affix position={{ bottom: 16, left: 16 }}>
-        <Paper withBorder shadow="lg" radius="lg" p="md">
-          <Stack gap="xs">
-            <Text size="xs" c={mutedText} fw={600}>
-              Serving player
-            </Text>
-            <Group gap="xs" wrap="wrap">
-              {players.map((player) => {
-                const isCurrentServer = server === player.id
-                return (
-                  <Button
-                    key={player.id}
-                    size="sm"
-                    variant={isCurrentServer ? 'filled' : 'light'}
-                    color={isCurrentServer ? 'cyan' : 'gray'}
-                    onClick={() => onSetServer(player.id)}
-                  >
-                    {player.name}
-                  </Button>
-                )
-              })}
-              <Button size="sm" variant="subtle" color="gray" onClick={onToggleServer}>
-                Swap
-              </Button>
-            </Group>
-          </Stack>
-        </Paper>
-      </Affix>
+      <Paper withBorder shadow="lg" radius="lg" p="md">
+        <Stack gap="xs">
+          <Text size="xs" c={mutedText} fw={600}>
+            Serving player
+          </Text>
+          <Group gap="xs" wrap="wrap">
+            {players.map((player) => {
+              const isCurrentServer = server === player.id
+              return (
+                <Button
+                  key={player.id}
+                  size="sm"
+                  variant={isCurrentServer ? 'filled' : 'light'}
+                  color={isCurrentServer ? 'cyan' : 'gray'}
+                  onClick={() => onSetServer(player.id)}
+                >
+                  {player.name}
+                </Button>
+              )
+            })}
+            <Button size="sm" variant="subtle" color="gray" onClick={onToggleServer}>
+              Swap
+            </Button>
+          </Group>
+        </Stack>
+      </Paper>
     </>
   )
 }

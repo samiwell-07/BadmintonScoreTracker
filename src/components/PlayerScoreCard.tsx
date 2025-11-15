@@ -148,18 +148,24 @@ export const PlayerScoreCard = ({
         </Group>
         <Stack gap="md">
           <div>
-            <Text size="sm" c={mutedText}>
-              Points
-            </Text>
-            <Title order={1} style={{ lineHeight: 1, fontSize: '4rem' }}>
-              {player.points}
-            </Title>
-          </div>
-          <div>
-            <Text size="sm" c={mutedText}>
-              Games won
-            </Text>
-            <Title order={3}>{player.games}</Title>
+            <Group align="flex-end" gap="xl" wrap="wrap">
+              <div>
+                <Text size="sm" c={mutedText}>
+                  Points
+                </Text>
+                <Title order={1} style={{ lineHeight: 1, fontSize: '4rem' }}>
+                  {player.points}
+                </Title>
+              </div>
+              <div>
+                <Text size="sm" c={mutedText}>
+                  Games won
+                </Text>
+                <Title order={3} style={{ lineHeight: 1 }}>
+                  {player.games}
+                </Title>
+              </div>
+            </Group>
           </div>
           <Group gap="xs" grow>
             <Button
