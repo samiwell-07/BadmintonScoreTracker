@@ -39,7 +39,8 @@ export const MatchHeader = ({
           <Title order={2}>Badminton Score Tracker</Title>
           <Text c={mutedText} mt="xs">
             Keep a responsive, offline-friendly record of every rally. Scores stay in
-            local storage so you can close the tab and resume anytime.
+            local storage so you can close the tab and resume anytime. This Amazing application is made by Samuel Srouji.
+          
           </Text>
         </div>
         <Stack gap="xs" align="flex-end" style={{ minWidth: '12rem' }}>
