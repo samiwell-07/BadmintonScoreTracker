@@ -170,6 +170,7 @@ function App() {
             matchIsLive={matchIsLive}
             savedNames={match.savedNames}
             doublesMode={match.doublesMode}
+            teammateServerMap={match.teammateServerMap}
             onNameChange={handleNameChange}
             onPointChange={handlePointChange}
             onApplySavedName={handleApplySavedName}
@@ -215,6 +216,8 @@ function App() {
             mutedText={mutedText}
             players={match.players}
             server={match.server}
+            doublesMode={match.doublesMode}
+            teammateServerMap={match.teammateServerMap}
             onExitScoreOnly={handleScoreOnlyToggle}
             onSetServer={handleSetServer}
             onToggleServer={handleServerToggle}
