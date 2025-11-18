@@ -3,9 +3,11 @@ import { Box, Container, Stack } from '@mantine/core'
 import { MatchHeader } from './components/MatchHeader'
 import { PlayerGridSection } from './components/PlayerGridSection'
 import { ScoreOnlyOverlays } from './components/ScoreOnlyOverlays'
+import { ProfilerWrapper } from './components/ProfilerWrapper'
 import { useMatchController } from './hooks/useMatchController'
 import { useThemeColors } from './hooks/useThemeColors'
 import { useLanguage } from './hooks/useLanguage'
+import { perfMonitor } from './utils/performance'
 import type { MatchState } from './types/match'
 import type { MatchConfig } from './utils/match'
 const STORAGE_KEYS = {
@@ -98,6 +100,7 @@ function App() {
   )
 
   const handleScoreOnlyToggle = useCallback(() => {
+    perfMonitor.recordUserFlow({ type: 'toggle-score-only-view', timestamp: performance.now() })
     setScoreOnlyMode((previous) => {
       const next = !previous
       if (next) {
@@ -108,6 +111,7 @@ function App() {
   }, [])
 
   const handleSimpleScoreToggle = useCallback(() => {
+    perfMonitor.recordUserFlow({ type: 'toggle-simple-score-view', timestamp: performance.now() })
     setSimpleScoreMode((previous) => {
       const next = !previous
       if (next) {
@@ -184,123 +188,137 @@ function App() {
 
   if (simpleScoreMode) {
     return (
-      <Box
-        style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
-      >
-        <Container size="md" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
-          <Suspense fallback={<Stack gap="xs">{t.app.loadingScoreView}</Stack>}>
-            <SimpleScoreView
-              players={match.players}
-              cardBg={cardBg}
-              mutedText={mutedText}
-              matchIsLive={matchIsLive}
-              onPointChange={handlePointChange}
-              onExit={() => setSimpleScoreMode(false)}
-              t={t}
-            />
-          </Suspense>
-        </Container>
-      </Box>
+      <ProfilerWrapper id="App-SimpleScoreMode">
+        <Box
+          style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
+        >
+          <Container size="md" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
+            <Suspense fallback={<Stack gap="xs">{t.app.loadingScoreView}</Stack>}>
+              <ProfilerWrapper id="SimpleScoreView">
+                <SimpleScoreView
+                  players={match.players}
+                  cardBg={cardBg}
+                  mutedText={mutedText}
+                  matchIsLive={matchIsLive}
+                  onPointChange={handlePointChange}
+                  onExit={() => setSimpleScoreMode(false)}
+                  t={t}
+                />
+              </ProfilerWrapper>
+            </Suspense>
+          </Container>
+        </Box>
+      </ProfilerWrapper>
     )
   }
 
   return (
-    <Box
-      style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
-    >
-      <Container size="lg" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
-        <Stack gap="lg">
-          {!scoreOnlyMode && (
-            <MatchHeader
-              cardBg={cardBg}
+    <ProfilerWrapper id="App-FullMode">
+      <Box
+        style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
+      >
+        <Container size="lg" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
+          <Stack gap="lg">
+            {!scoreOnlyMode && (
+              <ProfilerWrapper id="MatchHeader">
+                <MatchHeader
+                  cardBg={cardBg}
+                  mutedText={mutedText}
+                  onUndo={handleUndo}
+                  onToggleColorMode={toggleColorMode}
+                  colorScheme={colorScheme}
+                  canUndo={history.length > 0}
+                  scoreOnlyMode={scoreOnlyMode}
+                  onToggleScoreOnly={handleScoreOnlyToggle}
+                  simpleScoreMode={simpleScoreMode}
+                  onToggleSimpleScore={handleSimpleScoreToggle}
+                  language={language}
+                  onToggleLanguage={toggleLanguage}
+                  t={t}
+                />
+              </ProfilerWrapper>
+            )}
+            <ProfilerWrapper id="PlayerGridSection">
+              <PlayerGridSection
+                players={match.players}
+                cardBg={cardBg}
+                mutedText={mutedText}
+                server={match.server}
+                matchWinner={match.matchWinner}
+                gamesNeeded={gamesNeeded}
+                matchConfig={matchConfig}
+                matchIsLive={matchIsLive}
+                savedNames={match.savedNames}
+                doublesMode={match.doublesMode}
+                teammateServerMap={match.teammateServerMap}
+                onNameChange={handleNameChange}
+                onPointChange={handlePointChange}
+                onApplySavedName={handleApplySavedName}
+                onSaveName={handleSavePlayerName}
+                onTeammateNameChange={handleTeammateNameChange}
+                onSaveTeammateName={handleSaveTeammateName}
+                onSwapTeammates={handleSwapTeammates}
+                t={t}
+              />
+            </ProfilerWrapper>
+
+            {match.doublesMode && (
+              <Suspense fallback={<Stack gap="xs">{t.app.loadingDoublesDiagram}</Stack>}>
+                <ProfilerWrapper id="DoublesCourtDiagram">
+                  <DoublesCourtDiagram
+                    players={match.players}
+                    server={match.server}
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    teammateServerMap={match.teammateServerMap}
+                    t={t}
+                  />
+                </ProfilerWrapper>
+              </Suspense>
+            )}
+
+            {!scoreOnlyMode && (
+              <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
+                <ProfilerWrapper id="MatchDetailPanels">
+                  <MatchDetailPanels
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    match={match}
+                    gamesNeeded={gamesNeeded}
+                    matchIsLive={matchIsLive}
+                    elapsedMs={displayElapsedMs}
+                    onRaceToChange={handleRaceToChange}
+                    onBestOfChange={handleBestOfChange}
+                    onWinByTwoToggle={handleWinByTwoToggle}
+                    onDoublesToggle={handleDoublesModeToggle}
+                    onSwapEnds={handleSwapEnds}
+                    onToggleServer={handleServerToggle}
+                    onResetGame={handleResetGame}
+                    onResetMatch={handleResetMatch}
+                    onToggleClock={handleClockToggle}
+                    onClearHistory={handleClearHistory}
+                    t={t}
+                  />
+                </ProfilerWrapper>
+              </Suspense>
+            )}
+
+            <ScoreOnlyOverlays
+              active={scoreOnlyMode && !simpleScoreMode}
               mutedText={mutedText}
-              onUndo={handleUndo}
-              onToggleColorMode={toggleColorMode}
-              colorScheme={colorScheme}
-              canUndo={history.length > 0}
-              scoreOnlyMode={scoreOnlyMode}
-              onToggleScoreOnly={handleScoreOnlyToggle}
-              simpleScoreMode={simpleScoreMode}
-              onToggleSimpleScore={handleSimpleScoreToggle}
-              language={language}
-              onToggleLanguage={toggleLanguage}
+              players={match.players}
+              server={match.server}
+              doublesMode={match.doublesMode}
+              teammateServerMap={match.teammateServerMap}
+              onExitScoreOnly={handleScoreOnlyToggle}
+              onSetServer={handleSetServer}
+              onToggleServer={handleServerToggle}
               t={t}
             />
-          )}
-          <PlayerGridSection
-            players={match.players}
-            cardBg={cardBg}
-            mutedText={mutedText}
-            server={match.server}
-            matchWinner={match.matchWinner}
-            gamesNeeded={gamesNeeded}
-            matchConfig={matchConfig}
-            matchIsLive={matchIsLive}
-            savedNames={match.savedNames}
-            doublesMode={match.doublesMode}
-            teammateServerMap={match.teammateServerMap}
-            onNameChange={handleNameChange}
-            onPointChange={handlePointChange}
-            onApplySavedName={handleApplySavedName}
-            onSaveName={handleSavePlayerName}
-            onTeammateNameChange={handleTeammateNameChange}
-            onSaveTeammateName={handleSaveTeammateName}
-            onSwapTeammates={handleSwapTeammates}
-            t={t}
-          />
-
-          {match.doublesMode && (
-            <Suspense fallback={<Stack gap="xs">{t.app.loadingDoublesDiagram}</Stack>}>
-              <DoublesCourtDiagram
-                players={match.players}
-                server={match.server}
-                cardBg={cardBg}
-                mutedText={mutedText}
-                teammateServerMap={match.teammateServerMap}
-                t={t}
-              />
-            </Suspense>
-          )}
-
-          {!scoreOnlyMode && (
-            <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
-              <MatchDetailPanels
-                cardBg={cardBg}
-                mutedText={mutedText}
-                match={match}
-                gamesNeeded={gamesNeeded}
-                matchIsLive={matchIsLive}
-                elapsedMs={displayElapsedMs}
-                onRaceToChange={handleRaceToChange}
-                onBestOfChange={handleBestOfChange}
-                onWinByTwoToggle={handleWinByTwoToggle}
-                onDoublesToggle={handleDoublesModeToggle}
-                onSwapEnds={handleSwapEnds}
-                onToggleServer={handleServerToggle}
-                onResetGame={handleResetGame}
-                onResetMatch={handleResetMatch}
-                onToggleClock={handleClockToggle}
-                onClearHistory={handleClearHistory}
-                t={t}
-              />
-            </Suspense>
-          )}
-
-          <ScoreOnlyOverlays
-            active={scoreOnlyMode && !simpleScoreMode}
-            mutedText={mutedText}
-            players={match.players}
-            server={match.server}
-            doublesMode={match.doublesMode}
-            teammateServerMap={match.teammateServerMap}
-            onExitScoreOnly={handleScoreOnlyToggle}
-            onSetServer={handleSetServer}
-            onToggleServer={handleServerToggle}
-            t={t}
-          />
-        </Stack>
-      </Container>
-    </Box>
+          </Stack>
+        </Container>
+      </Box>
+    </ProfilerWrapper>
   )
 }
 

@@ -12,6 +12,7 @@ import {
 import { clampPoints, didWinGame } from '../utils/match'
 import { showToast } from '../utils/notifications'
 import type { Translations } from '../i18n/translations'
+import { perfMonitor } from '../utils/performance'
 import { createFreshClockState, getLiveElapsedMs } from './matchController/clock'
 import { rotateRightCourtTeammate } from './matchController/teammates'
 import { readFromStorage } from './matchController/state'
@@ -51,6 +52,12 @@ export const useMatchController = (t: Translations) => {
   }
 
   const handlePointChange = (playerId: PlayerId, delta: number) => {
+    perfMonitor.recordUserFlow({
+      type: delta > 0 ? 'award-point' : 'subtract-point',
+      timestamp: performance.now(),
+      metadata: { playerId, delta },
+    })
+
     if (match.matchWinner && delta > 0) {
       showToast({
         title: t.toasts.matchFinishedTitle,
@@ -179,6 +186,7 @@ export const useMatchController = (t: Translations) => {
   }
 
   const handleResetGame = () => {
+    perfMonitor.recordUserFlow({ type: 'reset-game', timestamp: performance.now() })
     pushUpdate((state) => ({
       ...state,
       players: state.players.map((player) => ({
@@ -191,6 +199,7 @@ export const useMatchController = (t: Translations) => {
   }
 
   const handleResetMatch = () => {
+    perfMonitor.recordUserFlow({ type: 'reset-match', timestamp: performance.now() })
     pushUpdate((state) => ({
       ...state,
       players: state.players.map((player) => ({
@@ -315,6 +324,11 @@ export const useMatchController = (t: Translations) => {
   }
 
   const handleDoublesModeToggle = (enabled: boolean) => {
+    perfMonitor.recordUserFlow({
+      type: 'toggle-doubles-mode',
+      timestamp: performance.now(),
+      metadata: { enabled },
+    })
     pushUpdate((state) => ({
       ...state,
       doublesMode: enabled,
