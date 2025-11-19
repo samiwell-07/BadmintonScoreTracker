@@ -2,14 +2,18 @@ import {
   BEST_OF_OPTIONS,
   DEFAULT_STATE,
   GAME_HISTORY_LIMIT,
+  PROFILE_COLORS,
   SAVED_NAMES_LIMIT,
   STORAGE_KEY,
   createDefaultTeammateServerMap,
   type MatchState,
   type PlayerId,
+  type PlayerProfile,
+  type ProfileColor,
 } from '../../types/match'
 import { createFreshClockState } from './clock'
 import { normalizeTeammates, normalizeTeammateServerMap } from './teammates'
+import { createProfileId } from './ids'
 
 const createDefaultPlayers = () =>
   DEFAULT_STATE.players.map((player) => ({
@@ -37,13 +41,58 @@ const clampCompletedGames = (games: MatchState['completedGames']) =>
     }))
     .slice(0, GAME_HISTORY_LIMIT)
 
-const sanitizeSavedNames = (names: unknown) =>
-  Array.isArray(names)
-    ? names
-        .map((name) => name?.toString().trim())
-        .filter((name): name is string => Boolean(name))
-        .slice(0, SAVED_NAMES_LIMIT)
-    : DEFAULT_STATE.savedNames
+const resolveProfileColor = (index: number): ProfileColor =>
+  PROFILE_COLORS[index % PROFILE_COLORS.length]
+
+const isProfileColor = (value: string): value is ProfileColor =>
+  PROFILE_COLORS.includes(value as ProfileColor)
+
+const sanitizeSavedProfiles = (value: unknown): PlayerProfile[] => {
+  if (!Array.isArray(value)) {
+    return DEFAULT_STATE.savedNames
+  }
+
+  const normalized: PlayerProfile[] = []
+
+  value.forEach((entry, index) => {
+    if (typeof entry === 'string') {
+      const label = entry.trim()
+      if (!label) {
+        return
+      }
+      normalized.push({
+        id: createProfileId(),
+        label,
+        color: resolveProfileColor(normalized.length),
+      })
+      return
+    }
+
+    if (typeof entry !== 'object' || entry === null) {
+      return
+    }
+
+    const candidate = entry as Partial<PlayerProfile>
+    const label = typeof candidate.label === 'string' ? candidate.label.trim() : ''
+    if (!label) {
+      return
+    }
+
+    const color =
+      typeof candidate.color === 'string' && isProfileColor(candidate.color)
+        ? candidate.color
+        : resolveProfileColor(index)
+
+    normalized.push({
+      id: typeof candidate.id === 'string' ? candidate.id : createProfileId(),
+      label,
+      color,
+      icon: typeof candidate.icon === 'string' ? candidate.icon : undefined,
+    })
+  })
+
+  return normalized.slice(0, SAVED_NAMES_LIMIT)
+}
 
 const sanitizeClock = (parsed: Partial<MatchState>) => {
   const clockRunning =
@@ -119,7 +168,7 @@ export const readFromStorage = (): MatchState => {
       clockRunning,
       clockElapsedMs,
       clockStartedAt,
-      savedNames: sanitizeSavedNames(parsed.savedNames),
+      savedNames: sanitizeSavedProfiles(parsed.savedNames),
       doublesMode:
         typeof parsed.doublesMode === 'boolean'
           ? parsed.doublesMode

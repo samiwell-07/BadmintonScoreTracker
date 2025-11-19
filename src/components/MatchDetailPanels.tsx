@@ -1,8 +1,10 @@
-import { memo, lazy, Suspense } from 'react'
-import type { MatchState } from '../types/match'
+import { memo, lazy, Suspense, useState } from 'react'
+import type { CompletedMatchSummary, MatchState, PlayerProfile } from '../types/match'
 import type { Translations } from '../i18n/translations'
 import { MatchSettingsCard } from './MatchSettingsCard'
 import { MatchControlsCard } from './MatchControlsCard'
+import { MatchStatsPanel } from './MatchStatsPanel'
+import { ProfilesSettingsCard } from './ProfilesSettingsCard'
 
 const MatchInsightsCardLazy = lazy(() =>
   import('./MatchInsightsCard').then(({ MatchInsightsCard }) => ({
@@ -23,6 +25,7 @@ interface MatchDetailPanelsProps {
   gamesNeeded: number
   matchIsLive: boolean
   elapsedMs: number
+  completedMatches: CompletedMatchSummary[]
   onRaceToChange: (value: number) => void
   onBestOfChange: (bestOf: MatchState['bestOf']) => void
   onWinByTwoToggle: (checked: boolean) => void
@@ -33,6 +36,8 @@ interface MatchDetailPanelsProps {
   onResetMatch: () => void
   onToggleClock: () => void
   onClearHistory: () => void
+  onApplyProfile: (playerId: MatchState['players'][number]['id'], profile: PlayerProfile) => void
+  onSaveProfile: (playerId: MatchState['players'][number]['id']) => void
   t: Translations
 }
 
@@ -43,6 +48,7 @@ const MatchDetailPanelsComponent = ({
   gamesNeeded,
   matchIsLive,
   elapsedMs,
+  completedMatches,
   onRaceToChange,
   onBestOfChange,
   onWinByTwoToggle,
@@ -53,54 +59,83 @@ const MatchDetailPanelsComponent = ({
   onResetMatch,
   onToggleClock,
   onClearHistory,
+  onApplyProfile,
+  onSaveProfile,
   t,
-}: MatchDetailPanelsProps) => (
-  <>
-    <MatchSettingsCard
-      cardBg={cardBg}
-      mutedText={mutedText}
-      match={match}
-      onRaceToChange={onRaceToChange}
-      onBestOfChange={onBestOfChange}
-      onWinByTwoToggle={onWinByTwoToggle}
-      onDoublesToggle={onDoublesToggle}
-      t={t}
-    />
+}: MatchDetailPanelsProps) => {
+  const [statsMode, setStatsMode] = useState(false)
 
-    <MatchControlsCard
-      cardBg={cardBg}
-      onSwapEnds={onSwapEnds}
-      onToggleServer={onToggleServer}
-      onResetGame={onResetGame}
-      onResetMatch={onResetMatch}
-      t={t}
-    />
+  if (statsMode) {
+    return (
+      <MatchStatsPanel
+        cardBg={cardBg}
+        mutedText={mutedText}
+        matchHistory={completedMatches}
+        onExit={() => setStatsMode(false)}
+        t={t}
+      />
+    )
+  }
 
-    <Suspense fallback={null}>
-      <MatchInsightsCardLazy
+  return (
+    <>
+      <MatchSettingsCard
         cardBg={cardBg}
         mutedText={mutedText}
         match={match}
-        gamesNeeded={gamesNeeded}
-        matchIsLive={matchIsLive}
-        elapsedMs={elapsedMs}
-        clockRunning={match.clockRunning}
-        onToggleClock={onToggleClock}
+        onRaceToChange={onRaceToChange}
+        onBestOfChange={onBestOfChange}
+        onWinByTwoToggle={onWinByTwoToggle}
+        onDoublesToggle={onDoublesToggle}
         t={t}
       />
-    </Suspense>
 
-    <Suspense fallback={null}>
-      <GameHistoryCardLazy
+      <ProfilesSettingsCard
         cardBg={cardBg}
         mutedText={mutedText}
-        games={match.completedGames}
-        onClearHistory={onClearHistory}
+        players={match.players}
+        profiles={match.savedNames}
+        onApplyProfile={onApplyProfile}
+        onSaveProfile={onSaveProfile}
         t={t}
       />
-    </Suspense>
-  </>
-)
+
+      <MatchControlsCard
+        cardBg={cardBg}
+        onSwapEnds={onSwapEnds}
+        onToggleServer={onToggleServer}
+        onResetGame={onResetGame}
+        onResetMatch={onResetMatch}
+        t={t}
+      />
+
+      <Suspense fallback={null}>
+        <MatchInsightsCardLazy
+          cardBg={cardBg}
+          mutedText={mutedText}
+          match={match}
+          gamesNeeded={gamesNeeded}
+          matchIsLive={matchIsLive}
+          elapsedMs={elapsedMs}
+          clockRunning={match.clockRunning}
+          onToggleClock={onToggleClock}
+          t={t}
+        />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <GameHistoryCardLazy
+          cardBg={cardBg}
+          mutedText={mutedText}
+          games={match.completedGames}
+          onClearHistory={onClearHistory}
+          onShowStats={() => setStatsMode(true)}
+          t={t}
+        />
+      </Suspense>
+    </>
+  )
+}
 
 export const MatchDetailPanels = memo(MatchDetailPanelsComponent)
 MatchDetailPanels.displayName = 'MatchDetailPanels'

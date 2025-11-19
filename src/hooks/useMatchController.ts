@@ -2,12 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   GAME_HISTORY_LIMIT,
   HISTORY_LIMIT,
+  MATCH_SUMMARY_LIMIT,
   STORAGE_KEY,
   getDefaultName,
   createDefaultTeammateServerMap,
   type CompletedGame,
+  type CompletedMatchPlayerSummary,
+  type CompletedMatchSummary,
   type MatchState,
   type PlayerId,
+  type PlayerProfile,
 } from '../types/match'
 import { clampPoints, didWinGame } from '../utils/match'
 import { showToast } from '../utils/notifications'
@@ -16,12 +20,19 @@ import { perfMonitor } from '../utils/performance'
 import { createFreshClockState, getLiveElapsedMs } from './matchController/clock'
 import { rotateRightCourtTeammate } from './matchController/teammates'
 import { readFromStorage } from './matchController/state'
-import { upsertSavedName } from './matchController/savedNames'
-import { createGameId } from './matchController/ids'
+import { upsertSavedProfile } from './matchController/savedNames'
+import { createGameId, createMatchId } from './matchController/ids'
+import {
+  persistCompletedMatchHistory,
+  readCompletedMatchHistory,
+} from './matchController/matches'
 
 export const useMatchController = (t: Translations) => {
   const [match, setMatch] = useState<MatchState>(readFromStorage)
   const [history, setHistory] = useState<MatchState[]>([])
+  const [completedMatches, setCompletedMatches] = useState<CompletedMatchSummary[]>(
+    readCompletedMatchHistory,
+  )
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -32,6 +43,14 @@ export const useMatchController = (t: Translations) => {
   }, [match])
 
   const gamesNeeded = useMemo(() => Math.ceil(match.bestOf / 2), [match.bestOf])
+
+  const recordCompletedMatch = (summary: CompletedMatchSummary) => {
+    setCompletedMatches((previous) => {
+      const next = [summary, ...previous].slice(0, MATCH_SUMMARY_LIMIT)
+      persistCompletedMatchHistory(next)
+      return next
+    })
+  }
 
   const pushUpdate = (updater: (state: MatchState) => MatchState) => {
     setMatch((previous) => {
@@ -46,7 +65,7 @@ export const useMatchController = (t: Translations) => {
     pushUpdate((state) => ({
       ...state,
       players: state.players.map((player) =>
-        player.id === playerId ? { ...player, name: trimmed } : player,
+        player.id === playerId ? { ...player, name: trimmed, profileId: null } : player,
       ),
     }))
   }
@@ -123,6 +142,8 @@ export const useMatchController = (t: Translations) => {
           ),
         }
 
+        const completedGamesWithLatest = [completedGame, ...state.completedGames]
+
         const updatedPlayers = players.map((player) => ({
           ...player,
           points: 0,
@@ -147,15 +168,24 @@ export const useMatchController = (t: Translations) => {
           status: 'success',
         })
 
+        if (isMatchWin) {
+          recordCompletedMatch(
+            buildCompletedMatchSummary({
+              games: completedGamesWithLatest,
+              match: state,
+              winnerId: playerId,
+              winnerName: winner.name,
+              durationMs: liveElapsedMs,
+            }),
+          )
+        }
+
         return {
           ...state,
           players: updatedPlayers,
           server: playerId,
           matchWinner: matchWinner ?? null,
-          completedGames: [completedGame, ...state.completedGames].slice(
-            0,
-            GAME_HISTORY_LIMIT,
-          ),
+          completedGames: completedGamesWithLatest.slice(0, GAME_HISTORY_LIMIT),
           clockRunning,
           clockStartedAt,
           clockElapsedMs,
@@ -347,10 +377,19 @@ export const useMatchController = (t: Translations) => {
       return
     }
 
-    pushUpdate((state) => ({
-      ...state,
-      savedNames: upsertSavedName(state.savedNames, trimmed),
-    }))
+    pushUpdate((state) => {
+      const nextSaved = upsertSavedProfile(state.savedNames, trimmed)
+      const linkedProfile = nextSaved.find((profile) => profile.label === trimmed) ?? null
+      return {
+        ...state,
+        savedNames: nextSaved,
+        players: state.players.map((entry) =>
+          entry.id === playerId
+            ? { ...entry, profileId: linkedProfile?.id ?? entry.profileId }
+            : entry,
+        ),
+      }
+    })
 
     showToast({ title: t.toasts.savedName(trimmed), status: 'success' })
   }
@@ -374,14 +413,14 @@ export const useMatchController = (t: Translations) => {
 
     pushUpdate((state) => ({
       ...state,
-      savedNames: upsertSavedName(state.savedNames, trimmed),
+      savedNames: upsertSavedProfile(state.savedNames, trimmed),
     }))
 
     showToast({ title: t.toasts.savedName(trimmed), status: 'success' })
   }
 
-  const handleApplySavedName = (playerId: PlayerId, name: string) => {
-    const trimmed = name.trim()
+  const handleApplySavedName = (playerId: PlayerId, profile: PlayerProfile) => {
+    const trimmed = profile.label.trim()
     if (!trimmed) {
       return
     }
@@ -389,7 +428,9 @@ export const useMatchController = (t: Translations) => {
     pushUpdate((state) => ({
       ...state,
       players: state.players.map((player) =>
-        player.id === playerId ? { ...player, name: trimmed } : player,
+        player.id === playerId
+          ? { ...player, name: trimmed, profileId: profile.id }
+          : player,
       ),
     }))
   }
@@ -420,6 +461,7 @@ export const useMatchController = (t: Translations) => {
     history,
     gamesNeeded,
     matchIsLive,
+    completedMatches,
     actions: {
       handleNameChange,
       handlePointChange,
@@ -439,5 +481,90 @@ export const useMatchController = (t: Translations) => {
       handleClockToggle,
       pushUpdate,
     },
+  }
+}
+
+interface BuildSummaryInput {
+  games: CompletedGame[]
+  match: MatchState
+  winnerId: PlayerId
+  winnerName: string
+  durationMs: number
+}
+
+const ensureUniqueProfileNames = (players: CompletedMatchPlayerSummary[]) => {
+  const counts = new Map<string, number>()
+  players.forEach((player) => {
+    if (player.profileId) {
+      return
+    }
+    counts.set(player.name, (counts.get(player.name) ?? 0) + 1)
+  })
+
+  const usage = new Map<string, number>()
+  return players.map((player) => {
+    if (player.profileId) {
+      return player
+    }
+    const duplicates = counts.get(player.name) ?? 0
+    if (duplicates <= 1) {
+      return player
+    }
+
+    const nextIndex = (usage.get(player.name) ?? 0) + 1
+    usage.set(player.name, nextIndex)
+    return { ...player, name: `${player.name} ${nextIndex}` }
+  })
+}
+
+const buildCompletedMatchSummary = ({
+  games,
+  match,
+  winnerId,
+  winnerName,
+  durationMs,
+}: BuildSummaryInput): CompletedMatchSummary => {
+  const totalRallies = games.reduce((acc, game) => {
+    const gameTotal = Object.values(game.scores).reduce(
+      (sum, score) => sum + score.points,
+      0,
+    )
+    return acc + gameTotal
+  }, 0)
+
+  const playerSummaries: CompletedMatchPlayerSummary[] = match.players.map((player) => {
+    const pointsScored = games.reduce((sum, game) => {
+      const score = game.scores[player.id]
+      return sum + (score ? score.points : 0)
+    }, 0)
+
+    const gamesWon = games.reduce(
+      (sum, game) => (game.winnerId === player.id ? sum + 1 : sum),
+      0,
+    )
+
+    return {
+      playerId: player.id,
+      name: player.name,
+      pointsScored,
+      gamesWon,
+      wonMatch: winnerId === player.id,
+      profileId: player.profileId ?? null,
+    }
+  })
+
+  return {
+    id: createMatchId(),
+    completedAt: Date.now(),
+    durationMs: Math.max(0, durationMs),
+    gamesPlayed: games.length,
+    totalRallies,
+    raceTo: match.raceTo,
+    bestOf: match.bestOf,
+    winByTwo: match.winByTwo,
+    doublesMode: match.doublesMode,
+    winnerId,
+    winnerName,
+    players: ensureUniqueProfileNames(playerSummaries),
   }
 }

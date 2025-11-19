@@ -12,7 +12,7 @@ import {
 import { memo, useCallback, type FocusEvent, type KeyboardEvent } from 'react'
 import type { MatchConfig } from '../utils/match'
 import { didWinGame } from '../utils/match'
-import type { PlayerId, PlayerState } from '../types/match'
+import type { PlayerId, PlayerProfile, PlayerState } from '../types/match'
 import { SavedNamesMenu } from './SavedNamesMenu'
 import type { Translations } from '../i18n/translations'
 
@@ -26,11 +26,11 @@ interface PlayerScoreCardProps {
   gamesNeeded: number
   matchConfig: MatchConfig
   matchIsLive: boolean
-  savedNames: string[]
+  savedNames: PlayerProfile[]
   doublesMode: boolean
   onNameChange: (playerId: PlayerId, name: string) => void
   onPointChange: (playerId: PlayerId, delta: number) => void
-  onApplySavedName: (playerId: PlayerId, name: string) => void
+  onApplySavedName: (playerId: PlayerId, profile: PlayerProfile) => void
   onSaveName: (playerId: PlayerId) => void
   onTeammateNameChange: (playerId: PlayerId, teammateId: string, name: string) => void
   onSaveTeammateName: (playerId: PlayerId, teammateId: string) => void
@@ -153,7 +153,7 @@ const PlayerScoreCardComponent = ({
             <SavedNamesMenu
               savedNames={savedNames}
               menuPosition="bottom-end"
-              onApply={(name) => onApplySavedName(player.id, name)}
+              onApply={(profile) => onApplySavedName(player.id, profile)}
               onSave={() => onSaveName(player.id)}
               saveLabel={t.playerCard.savePlayerName(player.name)}
               onClear={() => onNameChange(player.id, '')}
@@ -241,7 +241,7 @@ const PlayerScoreCardComponent = ({
                     iconSize={14}
                     tooltipLabel={t.playerCard.savedNamesTooltip}
                     menuPosition="bottom-end"
-                    onApply={(name) => handleTeammateApply(teammate.id, name)}
+                    onApply={(profile) => handleTeammateApply(teammate.id, profile.label)}
                     onSave={() => handleTeammateSave(teammate.id)}
                     onClear={() => handleTeammateClear(teammate.id)}
                     saveLabel={t.playerCard.saveTeammateName(teammate.name || player.name)}

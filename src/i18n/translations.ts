@@ -61,6 +61,28 @@ export interface Translations {
     doublesLabel: string
     doublesEnabled: string
     doublesDisabled: string
+    quickPresets: {
+      title: string
+      helper: string
+      hint: string
+      presets: Record<
+        'standard' | 'doubles' | 'short' | 'sprint',
+        {
+          label: string
+          description: string
+        }
+      >
+    }
+    recentConfigs: {
+      title: string
+      helper: string
+      empty: string
+      label: (raceTo: number, bestOf: number) => string
+      singlesTag: string
+      doublesTag: string
+      winByTwoTag: string
+      suddenDeathTag: string
+    }
   }
   insights: {
     title: string
@@ -100,6 +122,22 @@ export interface Translations {
     menuLabel: string
     noSavedNames: string
     tooltip: string
+    quickApplyLabel: string
+    quickApplyHint: string
+    quickApplyEmpty: string
+    recentBadge: string
+    allNamesLabel: string
+    clearHelper: string
+    saveHelper: string
+  }
+  profilesPanel: {
+    title: string
+    description: string
+    saveButton: string
+    linkedLabel: (profileName: string) => string
+    unlinkedLabel: string
+    emptyState: string
+    applyHint: string
   }
   history: {
     title: string
@@ -112,6 +150,7 @@ export interface Translations {
     eraseHistory: string
     gameLabel: (gameNumber: number) => string
     winnerBadge: (name: string) => string
+    statsButton: string
   }
   overlays: {
     servingLabel: string
@@ -135,6 +174,32 @@ export interface Translations {
   doublesDiagram: {
     serve: string
     receive: string
+  }
+  statsPanel: {
+    title: string
+    backButton: string
+    description: string
+    requirementTitle: string
+    requirementBody: (minMatches: number) => string
+    previousMatchLabel: (relativeTime: string) => string
+    configLabel: (raceTo: number, bestOf: number) => string
+    matchDurationLabel: string
+    matchDurationHint: string
+    averageRallyLabel: string
+    averageRallyHint: string
+    totalRalliesLabel: string
+    totalRalliesHint: string
+    pointsPerMinuteLabel: string
+    pointsPerMinuteHint: string
+    averageGameLabel: string
+    averageGameHint: string
+    noGamesYet: string
+    profileHeading: string
+    profileEmpty: string
+    profileMatchesLabel: (matches: number) => string
+    profileWinRateLabel: string
+    profilePointsLabel: string
+    profileAvgDurationLabel: string
   }
 }
 
@@ -204,6 +269,39 @@ export const translations: Record<Language, Translations> = {
       doublesLabel: 'Doubles contributions',
       doublesEnabled: 'Tracking',
       doublesDisabled: 'Hidden',
+      quickPresets: {
+        title: 'Quick presets',
+        helper: 'Dial in the match feel before the first rally.',
+        hint: 'Applies race-to, match length, and doubles rules at once.',
+        presets: {
+          standard: {
+            label: 'Standard rally',
+            description: '21-point games · best of 3 · win by two.',
+          },
+          doubles: {
+            label: 'Doubles ready',
+            description: '21-point games with doubles tracking enabled.',
+          },
+          short: {
+            label: 'Quick 15',
+            description: '15-point practice games · best of 3.',
+          },
+          sprint: {
+            label: 'Sprint 11',
+            description: '11-point single game · sudden death.',
+          },
+        },
+      },
+      recentConfigs: {
+        title: 'Recent setups',
+        helper: 'We remember the last few combos you used.',
+        empty: 'Adjust any setting to build this list.',
+        label: (raceTo, bestOf) => `Race to ${raceTo} · Best of ${bestOf}`,
+        singlesTag: 'Singles',
+        doublesTag: 'Doubles',
+        winByTwoTag: 'Win by two',
+        suddenDeathTag: 'Sudden death',
+      },
     },
     insights: {
       title: 'Match insights',
@@ -245,6 +343,22 @@ export const translations: Record<Language, Translations> = {
       menuLabel: 'Saved names',
       noSavedNames: 'No saved names',
       tooltip: 'Saved names',
+      quickApplyLabel: 'Quick apply',
+      quickApplyHint: 'Fills this field instantly.',
+      quickApplyEmpty: 'Save a name to unlock quick apply.',
+      recentBadge: 'Recent',
+      allNamesLabel: 'All saved names',
+      clearHelper: 'Revert to the default placeholder name.',
+      saveHelper: 'Adds the current input to this list.',
+    },
+    profilesPanel: {
+      title: 'Profiles',
+      description: 'Link players to reusable profiles so history and stats stay consistent.',
+      saveButton: 'Save as profile',
+      linkedLabel: (profileName) => `Linked to ${profileName}`,
+      unlinkedLabel: 'Not linked to a profile',
+      emptyState: 'Save a player to start building your profile library.',
+      applyHint: 'Tap a profile to apply it to any player card.',
     },
     history: {
       title: 'Game history',
@@ -258,6 +372,7 @@ export const translations: Record<Language, Translations> = {
       eraseHistory: 'Erase history',
       gameLabel: (number) => `Game ${number}`,
       winnerBadge: (name) => `Winner · ${name}`,
+      statsButton: 'Stats',
     },
     overlays: {
       servingLabel: 'Serving player',
@@ -287,6 +402,33 @@ export const translations: Record<Language, Translations> = {
     doublesDiagram: {
       serve: 'SERVE',
       receive: 'RECV',
+    },
+    statsPanel: {
+      title: 'Match stats',
+      backButton: 'Back to details',
+      description: 'Focus on tempo, rally pace, and duration without other panels in view.',
+      requirementTitle: 'Keep playing to unlock stats',
+      requirementBody: (minMatches) => `Complete at least ${minMatches} matches to view stats from your previous match.`,
+      previousMatchLabel: (relativeTime) => `Most recent completed match (${relativeTime}).`,
+      configLabel: (raceTo, bestOf) => `Race to ${raceTo} · Best of ${bestOf}`,
+      matchDurationLabel: 'Match duration',
+      matchDurationHint: 'Clock time since this match began.',
+      averageRallyLabel: 'Average rally length',
+      averageRallyHint: 'Elapsed time divided by rallies played.',
+      totalRalliesLabel: 'Rallies played',
+      totalRalliesHint: 'Includes completed games plus the live game.',
+      pointsPerMinuteLabel: 'Rallies per minute',
+      pointsPerMinuteHint: 'Based on the running match clock.',
+      averageGameLabel: 'Average game duration',
+      averageGameHint: 'Only counts finished games.',
+      noGamesYet: 'No completed games yet',
+      profileHeading: 'Player profiles',
+      profileEmpty: 'Finish matches to build player profiles.',
+      profileMatchesLabel: (matches: number) =>
+        `${matches} ${matches === 1 ? 'match' : 'matches'}`,
+      profileWinRateLabel: 'Win rate',
+      profilePointsLabel: 'Avg points',
+      profileAvgDurationLabel: 'Avg match duration',
     },
   },
   fr: {
@@ -344,6 +486,39 @@ export const translations: Record<Language, Translations> = {
       doublesLabel: 'Contribution en double',
       doublesEnabled: 'Suivi',
       doublesDisabled: 'Masqué',
+      quickPresets: {
+        title: 'Préréglages rapides',
+        helper: 'Réglez l’ambiance du match avant le premier volant.',
+        hint: 'Ajuste automatiquement points, durée et règles.',
+        presets: {
+          standard: {
+            label: 'Rallye standard',
+            description: 'Jeux à 21 points · meilleur des 3 · deux points d’écart.',
+          },
+          doubles: {
+            label: 'Prêt pour le double',
+            description: 'Jeux à 21 points avec suivi des paires.',
+          },
+          short: {
+            label: 'Rapide 15',
+            description: 'Jeux à 15 points · meilleur des 3.',
+          },
+          sprint: {
+            label: 'Sprint 11',
+            description: 'Jeu unique à 11 points · mort subite.',
+          },
+        },
+      },
+      recentConfigs: {
+        title: 'Configurations récentes',
+        helper: 'Vos derniers réglages restent à portée.',
+        empty: 'Modifiez un paramètre pour remplir cette liste.',
+        label: (raceTo, bestOf) => `Course à ${raceTo} · Meilleur des ${bestOf}`,
+        singlesTag: 'Simple',
+        doublesTag: 'Double',
+        winByTwoTag: 'Deux points d’écart',
+        suddenDeathTag: 'Mort subite',
+      },
     },
     insights: {
       title: 'Aperçus du match',
@@ -385,6 +560,22 @@ export const translations: Record<Language, Translations> = {
       menuLabel: 'Noms enregistrés',
       noSavedNames: 'Aucun nom enregistré',
       tooltip: 'Noms enregistrés',
+      quickApplyLabel: 'Accès rapide',
+      quickApplyHint: 'Remplit ce champ immédiatement.',
+      quickApplyEmpty: 'Enregistrez un nom pour activer l’accès rapide.',
+      recentBadge: 'Récent',
+      allNamesLabel: 'Tous les noms enregistrés',
+      clearHelper: 'Revenir au nom par défaut.',
+      saveHelper: 'Ajoute le nom actuel à la liste.',
+    },
+    profilesPanel: {
+      title: 'Profils',
+      description: 'Associez les joueurs à des profils réutilisables pour garder un historique cohérent.',
+      saveButton: 'Enregistrer en profil',
+      linkedLabel: (profileName) => `Associé à ${profileName}`,
+      unlinkedLabel: 'Aucun profil associé',
+      emptyState: 'Enregistrez un joueur pour commencer votre bibliothèque de profils.',
+      applyHint: 'Touchez un profil pour l’appliquer à n’importe quel joueur.',
     },
     history: {
       title: 'Historique des jeux',
@@ -398,6 +589,7 @@ export const translations: Record<Language, Translations> = {
       eraseHistory: 'Effacer l’historique',
       gameLabel: (number) => `Jeu ${number}`,
       winnerBadge: (name) => `Vainqueur · ${name}`,
+      statsButton: 'Statistiques',
     },
     overlays: {
       servingLabel: 'Joueur au service',
@@ -427,6 +619,34 @@ export const translations: Record<Language, Translations> = {
     doublesDiagram: {
       serve: 'SERVICE',
       receive: 'RECEPTION',
+    },
+    statsPanel: {
+      title: 'Statistiques du match',
+      backButton: 'Retour aux détails',
+      description: 'Analysez le rythme et la durée sans les autres cartes.',
+      requirementTitle: 'Continuez pour débloquer les stats',
+      requirementBody: (minMatches) =>
+        `Terminez au moins ${minMatches} matchs pour afficher les statistiques de votre rencontre précédente.`,
+      previousMatchLabel: (relativeTime) => `Dernier match terminé (${relativeTime}).`,
+      configLabel: (raceTo, bestOf) => `Course à ${raceTo} · Meilleur des ${bestOf}`,
+      matchDurationLabel: 'Durée du match',
+      matchDurationHint: 'Temps écoulé depuis le début du match.',
+      averageRallyLabel: 'Longueur moyenne d’un rallye',
+      averageRallyHint: 'Temps écoulé divisé par les rallyes joués.',
+      totalRalliesLabel: 'Rallyes joués',
+      totalRalliesHint: 'Inclut les jeux terminés et la partie en cours.',
+      pointsPerMinuteLabel: 'Rallyes par minute',
+      pointsPerMinuteHint: 'Basé sur l’horloge du match.',
+      averageGameLabel: 'Durée moyenne d’un jeu',
+      averageGameHint: 'Uniquement les jeux terminés.',
+      noGamesYet: 'Aucun jeu terminé pour le moment',
+      profileHeading: 'Profils joueurs',
+      profileEmpty: 'Terminez des matchs pour créer des profils.',
+      profileMatchesLabel: (matches: number) =>
+        `${matches} ${matches === 1 ? 'match' : 'matchs'}`,
+      profileWinRateLabel: 'Taux de victoire',
+      profilePointsLabel: 'Points moyens',
+      profileAvgDurationLabel: 'Durée moyenne d’un match',
     },
   },
 }

@@ -9,10 +9,18 @@ interface GameHistoryCardProps {
   mutedText: string
   games: CompletedGame[]
   onClearHistory: () => void
+  onShowStats: () => void
   t: Translations
 }
 
-export const GameHistoryCard = ({ cardBg, mutedText, games, onClearHistory, t }: GameHistoryCardProps) => {
+export const GameHistoryCard = ({
+  cardBg,
+  mutedText,
+  games,
+  onClearHistory,
+  onShowStats,
+  t,
+}: GameHistoryCardProps) => {
   const [collapsed, setCollapsed] = useState(false)
   const summaryText = useMemo(() => {
     if (games.length === 0) {
@@ -42,6 +50,9 @@ export const GameHistoryCard = ({ cardBg, mutedText, games, onClearHistory, t }:
             </Text>
           </div>
           <Group gap="xs">
+            <Button size="xs" variant="light" onClick={onShowStats}>
+              {t.history.statsButton}
+            </Button>
             <Button size="xs" variant="subtle" onClick={() => setCollapsed((value) => !value)}>
               {collapsed ? t.history.showHistory : t.history.closeHistory}
             </Button>

@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react'
 import { Paper, SimpleGrid, Stack, Text } from '@mantine/core'
-import type { PlayerId, PlayerState } from '../types/match'
+import type { PlayerId, PlayerProfile, PlayerState } from '../types/match'
 import type { MatchConfig } from '../utils/match'
 import { PlayerScoreCard } from './PlayerScoreCard'
 import { getRotationSummary } from '../utils/doublesRotation'
@@ -15,12 +15,12 @@ interface PlayerGridSectionProps {
   gamesNeeded: number
   matchConfig: MatchConfig
   matchIsLive: boolean
-  savedNames: string[]
+  savedNames: PlayerProfile[]
   doublesMode: boolean
   teammateServerMap: Record<PlayerId, string>
   onNameChange: (playerId: PlayerId, name: string) => void
   onPointChange: (playerId: PlayerId, delta: number) => void
-  onApplySavedName: (playerId: PlayerId, name: string) => void
+  onApplySavedName: (playerId: PlayerId, profile: PlayerProfile) => void
   onSaveName: (playerId: PlayerId) => void
   onTeammateNameChange: (playerId: PlayerId, teammateId: string, name: string) => void
   onSaveTeammateName: (playerId: PlayerId, teammateId: string) => void

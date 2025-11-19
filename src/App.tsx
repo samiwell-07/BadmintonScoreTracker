@@ -59,7 +59,8 @@ const SimpleScoreView = lazy(() =>
 
 function App() {
   const { language, toggleLanguage, t } = useLanguage()
-  const { match, history, gamesNeeded, matchIsLive, actions } = useMatchController(t)
+  const { match, history, gamesNeeded, matchIsLive, completedMatches, actions } =
+    useMatchController(t)
   const { colorScheme, pageBg, cardBg, mutedText, toggleColorMode } = useThemeColors()
   const [scoreOnlyMode, setScoreOnlyMode] = useState(() =>
     readStoredBoolean(STORAGE_KEYS.scoreOnly),
@@ -287,6 +288,7 @@ function App() {
                     gamesNeeded={gamesNeeded}
                     matchIsLive={matchIsLive}
                     elapsedMs={displayElapsedMs}
+                    completedMatches={completedMatches}
                     onRaceToChange={handleRaceToChange}
                     onBestOfChange={handleBestOfChange}
                     onWinByTwoToggle={handleWinByTwoToggle}
@@ -297,6 +299,8 @@ function App() {
                     onResetMatch={handleResetMatch}
                     onToggleClock={handleClockToggle}
                     onClearHistory={handleClearHistory}
+                    onApplyProfile={handleApplySavedName}
+                    onSaveProfile={handleSavePlayerName}
                     t={t}
                   />
                 </ProfilerWrapper>
