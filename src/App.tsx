@@ -1,5 +1,15 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Burger, Button, Container, Drawer, Stack } from '@mantine/core'
+import {
+  Box,
+  Burger,
+  Button,
+  CloseButton,
+  Container,
+  Drawer,
+  Group,
+  Stack,
+  Text,
+} from '@mantine/core'
 import { MatchHeader } from './components/MatchHeader'
 import { PlayerGridSection } from './components/PlayerGridSection'
 import { MatchSettingsCard } from './components/MatchSettingsCard'
@@ -227,46 +237,55 @@ function App() {
 
   const menuInterface = (
     <>
-      <Box
-        style={{
-          position: 'fixed',
-          top: '1rem',
-          left: '1rem',
-          zIndex: 2100,
-        }}
-      >
-        <Burger
-          opened={menuOpened}
-          onClick={toggleMenu}
-          aria-label={t.menu.openLabel}
-          size="sm"
-        />
-      </Box>
+      {!menuOpened && (
+        <Box
+          style={{
+            position: 'fixed',
+            top: '1rem',
+            left: '1rem',
+            zIndex: 2100,
+          }}
+        >
+          <Burger
+            opened={false}
+            onClick={toggleMenu}
+            aria-label={t.menu.openLabel}
+            aria-pressed={menuOpened}
+            size="sm"
+          />
+        </Box>
+      )}
       <Drawer
         opened={menuOpened}
         onClose={closeMenu}
-        title={t.menu.title}
         position="left"
         size="lg"
         overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
         padding="md"
+        withCloseButton={false}
       >
         {menuOpened && (
-          <Stack gap="xs">
-            {([
-              ['score', t.menu.scoreSection],
-              ['settings', t.menu.settingsSection],
-              ['history', t.menu.historySection],
-            ] as const).map(([section, label]) => (
-              <Button
-                key={section}
-                fullWidth
-                variant={menuSection === section ? 'filled' : 'light'}
-                onClick={() => selectSection(section, true)}
-              >
-                {label}
-              </Button>
-            ))}
+          <Stack gap="md">
+            <Group justify="space-between" align="center">
+              <Text fw={600}>{t.menu.title}</Text>
+              <CloseButton aria-label={t.menu.closeLabel} onClick={closeMenu} />
+            </Group>
+            <Stack gap="xs">
+              {([
+                ['score', t.menu.scoreSection],
+                ['settings', t.menu.settingsSection],
+                ['history', t.menu.historySection],
+              ] as const).map(([section, label]) => (
+                <Button
+                  key={section}
+                  fullWidth
+                  variant={menuSection === section ? 'filled' : 'light'}
+                  onClick={() => selectSection(section, true)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </Stack>
           </Stack>
         )}
       </Drawer>

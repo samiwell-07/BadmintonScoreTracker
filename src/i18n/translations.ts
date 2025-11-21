@@ -20,6 +20,7 @@ export interface Translations {
   menu: {
     title: string
     openLabel: string
+    closeLabel: string
     scoreSection: string
     settingsSection: string
     historySection: string
@@ -222,6 +223,7 @@ export const translations: Record<Language, Translations> = {
     menu: {
       title: 'Match menu',
       openLabel: 'Toggle match menu',
+      closeLabel: 'Close match menu',
       scoreSection: 'Score counter',
       settingsSection: 'Match settings',
       historySection: 'History & stats',
@@ -437,6 +439,7 @@ export const translations: Record<Language, Translations> = {
     menu: {
       title: 'Menu du match',
       openLabel: 'Basculer le menu',
+      closeLabel: 'Fermer le menu',
       scoreSection: 'Compteur de score',
       settingsSection: 'Paramètres du match',
       historySection: 'Historique et stats',

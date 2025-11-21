@@ -27,7 +27,21 @@ const formatNumber = (value: number) => {
     return '0'
   }
 
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value)
+  return new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 1,
+    useGrouping: false,
+  }).format(value)
+}
+
+const formatInteger = (value: number) => {
+  if (!Number.isFinite(value) || value <= 0) {
+    return '0'
+  }
+
+  return new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 0,
+    useGrouping: false,
+  }).format(Math.round(value))
 }
 
 export const MatchStatsPanel = ({
@@ -88,7 +102,7 @@ export const MatchStatsPanel = ({
     },
     {
       label: t.statsPanel.pointsPerMinuteLabel,
-      value: formatNumber(pointsPerMinute),
+      value: formatInteger(pointsPerMinute),
       hint: t.statsPanel.pointsPerMinuteHint,
     },
     {
