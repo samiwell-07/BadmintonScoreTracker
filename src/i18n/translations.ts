@@ -17,6 +17,13 @@ export interface Translations {
     scoreOnlyView: string
     simpleScoreView: string
   }
+  menu: {
+    title: string
+    openLabel: string
+    scoreSection: string
+    settingsSection: string
+    historySection: string
+  }
   app: {
     documentTitle: string
     headerTitle: string
@@ -130,15 +137,6 @@ export interface Translations {
     clearHelper: string
     saveHelper: string
   }
-  profilesPanel: {
-    title: string
-    description: string
-    saveButton: string
-    linkedLabel: (profileName: string) => string
-    unlinkedLabel: string
-    emptyState: string
-    applyHint: string
-  }
   history: {
     title: string
     summaryEmpty: string
@@ -220,6 +218,13 @@ export const translations: Record<Language, Translations> = {
       showFullView: 'Show full view',
       scoreOnlyView: 'Score-only view',
       simpleScoreView: 'Simple score view',
+    },
+    menu: {
+      title: 'Match menu',
+      openLabel: 'Toggle match menu',
+      scoreSection: 'Score counter',
+      settingsSection: 'Match settings',
+      historySection: 'History & stats',
     },
     app: {
       documentTitle: 'Badminton Score Tracker',
@@ -351,15 +356,6 @@ export const translations: Record<Language, Translations> = {
       clearHelper: 'Revert to the default placeholder name.',
       saveHelper: 'Adds the current input to this list.',
     },
-    profilesPanel: {
-      title: 'Profiles',
-      description: 'Link players to reusable profiles so history and stats stay consistent.',
-      saveButton: 'Save as profile',
-      linkedLabel: (profileName) => `Linked to ${profileName}`,
-      unlinkedLabel: 'Not linked to a profile',
-      emptyState: 'Save a player to start building your profile library.',
-      applyHint: 'Tap a profile to apply it to any player card.',
-    },
     history: {
       title: 'Game history',
       summaryEmpty: 'Completed games will appear here.',
@@ -437,6 +433,13 @@ export const translations: Record<Language, Translations> = {
       showFullView: 'Vue complète',
       scoreOnlyView: 'Vue score uniquement',
       simpleScoreView: 'Vue simple',
+    },
+    menu: {
+      title: 'Menu du match',
+      openLabel: 'Basculer le menu',
+      scoreSection: 'Compteur de score',
+      settingsSection: 'Paramètres du match',
+      historySection: 'Historique et stats',
     },
     app: {
       documentTitle: 'Suivi de score badminton',
@@ -567,15 +570,6 @@ export const translations: Record<Language, Translations> = {
       allNamesLabel: 'Tous les noms enregistrés',
       clearHelper: 'Revenir au nom par défaut.',
       saveHelper: 'Ajoute le nom actuel à la liste.',
-    },
-    profilesPanel: {
-      title: 'Profils',
-      description: 'Associez les joueurs à des profils réutilisables pour garder un historique cohérent.',
-      saveButton: 'Enregistrer en profil',
-      linkedLabel: (profileName) => `Associé à ${profileName}`,
-      unlinkedLabel: 'Aucun profil associé',
-      emptyState: 'Enregistrez un joueur pour commencer votre bibliothèque de profils.',
-      applyHint: 'Touchez un profil pour l’appliquer à n’importe quel joueur.',
     },
     history: {
       title: 'Historique des jeux',

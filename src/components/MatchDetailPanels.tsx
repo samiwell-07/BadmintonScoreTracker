@@ -1,10 +1,9 @@
 import { memo, lazy, Suspense, useState } from 'react'
-import type { CompletedMatchSummary, MatchState, PlayerProfile } from '../types/match'
+import type { CompletedMatchSummary, MatchState } from '../types/match'
 import type { Translations } from '../i18n/translations'
 import { MatchSettingsCard } from './MatchSettingsCard'
 import { MatchControlsCard } from './MatchControlsCard'
 import { MatchStatsPanel } from './MatchStatsPanel'
-import { ProfilesSettingsCard } from './ProfilesSettingsCard'
 
 const MatchInsightsCardLazy = lazy(() =>
   import('./MatchInsightsCard').then(({ MatchInsightsCard }) => ({
@@ -36,8 +35,6 @@ interface MatchDetailPanelsProps {
   onResetMatch: () => void
   onToggleClock: () => void
   onClearHistory: () => void
-  onApplyProfile: (playerId: MatchState['players'][number]['id'], profile: PlayerProfile) => void
-  onSaveProfile: (playerId: MatchState['players'][number]['id']) => void
   t: Translations
 }
 
@@ -59,8 +56,6 @@ const MatchDetailPanelsComponent = ({
   onResetMatch,
   onToggleClock,
   onClearHistory,
-  onApplyProfile,
-  onSaveProfile,
   t,
 }: MatchDetailPanelsProps) => {
   const [statsMode, setStatsMode] = useState(false)
@@ -87,16 +82,6 @@ const MatchDetailPanelsComponent = ({
         onBestOfChange={onBestOfChange}
         onWinByTwoToggle={onWinByTwoToggle}
         onDoublesToggle={onDoublesToggle}
-        t={t}
-      />
-
-      <ProfilesSettingsCard
-        cardBg={cardBg}
-        mutedText={mutedText}
-        players={match.players}
-        profiles={match.savedNames}
-        onApplyProfile={onApplyProfile}
-        onSaveProfile={onSaveProfile}
         t={t}
       />
 

@@ -1,7 +1,9 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, Container, Stack } from '@mantine/core'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Box, Burger, Button, Container, Drawer, Stack } from '@mantine/core'
 import { MatchHeader } from './components/MatchHeader'
 import { PlayerGridSection } from './components/PlayerGridSection'
+import { MatchSettingsCard } from './components/MatchSettingsCard'
+import { MatchControlsCard } from './components/MatchControlsCard'
 import { ScoreOnlyOverlays } from './components/ScoreOnlyOverlays'
 import { ProfilerWrapper } from './components/ProfilerWrapper'
 import { useMatchController } from './hooks/useMatchController'
@@ -41,11 +43,6 @@ const useDebouncedBooleanStorage = (key: string, value: boolean, delay = 200) =>
   }, [key, value, delay])
 }
 
-const MatchDetailPanels = lazy(() =>
-  import('./components/MatchDetailPanels').then(({ MatchDetailPanels }) => ({
-    default: MatchDetailPanels,
-  })),
-)
 const DoublesCourtDiagram = lazy(() =>
   import('./components/DoublesCourtDiagram').then(({ DoublesCourtDiagram }) => ({
     default: DoublesCourtDiagram,
@@ -54,6 +51,21 @@ const DoublesCourtDiagram = lazy(() =>
 const SimpleScoreView = lazy(() =>
   import('./components/SimpleScoreView').then(({ SimpleScoreView }) => ({
     default: SimpleScoreView,
+  })),
+)
+const MatchInsightsCard = lazy(() =>
+  import('./components/MatchInsightsCard').then(({ MatchInsightsCard }) => ({
+    default: MatchInsightsCard,
+  })),
+)
+const GameHistoryCard = lazy(() =>
+  import('./components/GameHistoryCard').then(({ GameHistoryCard }) => ({
+    default: GameHistoryCard,
+  })),
+)
+const MatchStatsPanel = lazy(() =>
+  import('./components/MatchStatsPanel').then(({ MatchStatsPanel }) => ({
+    default: MatchStatsPanel,
   })),
 )
 
@@ -68,6 +80,10 @@ function App() {
   const [simpleScoreMode, setSimpleScoreMode] = useState(() =>
     readStoredBoolean(STORAGE_KEYS.simpleScore),
   )
+  type MenuSection = 'score' | 'settings' | 'history'
+  const [menuOpened, setMenuOpened] = useState(false)
+  const [menuSection, setMenuSection] = useState<MenuSection>('score')
+  const statsSectionRef = useRef<HTMLDivElement | null>(null)
   const {
     handleNameChange,
     handlePointChange,
@@ -87,6 +103,18 @@ function App() {
     handleClearHistory,
     pushUpdate,
   } = actions
+  const toggleMenu = useCallback(() => {
+    setMenuOpened((previous) => !previous)
+  }, [])
+  const closeMenu = useCallback(() => {
+    setMenuOpened(false)
+  }, [])
+  const selectSection = useCallback((section: MenuSection, close = false) => {
+    setMenuSection(section)
+    if (close) {
+      setMenuOpened(false)
+    }
+  }, [])
 
   useDebouncedBooleanStorage(STORAGE_KEYS.scoreOnly, scoreOnlyMode)
   useDebouncedBooleanStorage(STORAGE_KEYS.simpleScore, simpleScoreMode)
@@ -187,9 +215,68 @@ function App() {
     [pushUpdate],
   )
 
+  const scrollStatsIntoView = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() =>
+        statsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      )
+    } else {
+      statsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [])
+
+  const menuInterface = (
+    <>
+      <Box
+        style={{
+          position: 'fixed',
+          top: '1rem',
+          left: '1rem',
+          zIndex: 2100,
+        }}
+      >
+        <Burger
+          opened={menuOpened}
+          onClick={toggleMenu}
+          aria-label={t.menu.openLabel}
+          size="sm"
+        />
+      </Box>
+      <Drawer
+        opened={menuOpened}
+        onClose={closeMenu}
+        title={t.menu.title}
+        position="left"
+        size="lg"
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+        padding="md"
+      >
+        {menuOpened && (
+          <Stack gap="xs">
+            {([
+              ['score', t.menu.scoreSection],
+              ['settings', t.menu.settingsSection],
+              ['history', t.menu.historySection],
+            ] as const).map(([section, label]) => (
+              <Button
+                key={section}
+                fullWidth
+                variant={menuSection === section ? 'filled' : 'light'}
+                onClick={() => selectSection(section, true)}
+              >
+                {label}
+              </Button>
+            ))}
+          </Stack>
+        )}
+      </Drawer>
+    </>
+  )
+
   if (simpleScoreMode) {
     return (
       <ProfilerWrapper id="App-SimpleScoreMode">
+        {menuInterface}
         <Box
           style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
         >
@@ -215,6 +302,7 @@ function App() {
 
   return (
     <ProfilerWrapper id="App-FullMode">
+      {menuInterface}
       <Box
         style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
       >
@@ -239,73 +327,113 @@ function App() {
                 />
               </ProfilerWrapper>
             )}
-            <ProfilerWrapper id="PlayerGridSection">
-              <PlayerGridSection
-                players={match.players}
-                cardBg={cardBg}
-                mutedText={mutedText}
-                server={match.server}
-                matchWinner={match.matchWinner}
-                gamesNeeded={gamesNeeded}
-                matchConfig={matchConfig}
-                matchIsLive={matchIsLive}
-                savedNames={match.savedNames}
-                doublesMode={match.doublesMode}
-                teammateServerMap={match.teammateServerMap}
-                onNameChange={handleNameChange}
-                onPointChange={handlePointChange}
-                onApplySavedName={handleApplySavedName}
-                onSaveName={handleSavePlayerName}
-                onTeammateNameChange={handleTeammateNameChange}
-                onSaveTeammateName={handleSaveTeammateName}
-                onSwapTeammates={handleSwapTeammates}
-                t={t}
-              />
-            </ProfilerWrapper>
+            {menuSection === 'score' && (
+                <Stack gap="lg">
+                  <ProfilerWrapper id="PlayerGridSection">
+                    <PlayerGridSection
+                      players={match.players}
+                      cardBg={cardBg}
+                      mutedText={mutedText}
+                      server={match.server}
+                      matchWinner={match.matchWinner}
+                      gamesNeeded={gamesNeeded}
+                      matchConfig={matchConfig}
+                      matchIsLive={matchIsLive}
+                      savedNames={match.savedNames}
+                      doublesMode={match.doublesMode}
+                      teammateServerMap={match.teammateServerMap}
+                      onNameChange={handleNameChange}
+                      onPointChange={handlePointChange}
+                      onApplySavedName={handleApplySavedName}
+                      onSaveName={handleSavePlayerName}
+                      onTeammateNameChange={handleTeammateNameChange}
+                      onSaveTeammateName={handleSaveTeammateName}
+                      onSwapTeammates={handleSwapTeammates}
+                      t={t}
+                    />
+                  </ProfilerWrapper>
 
-            {match.doublesMode && (
-              <Suspense fallback={<Stack gap="xs">{t.app.loadingDoublesDiagram}</Stack>}>
-                <ProfilerWrapper id="DoublesCourtDiagram">
-                  <DoublesCourtDiagram
-                    players={match.players}
-                    server={match.server}
-                    cardBg={cardBg}
-                    mutedText={mutedText}
-                    teammateServerMap={match.teammateServerMap}
-                    t={t}
-                  />
-                </ProfilerWrapper>
-              </Suspense>
-            )}
+                  {match.doublesMode && (
+                    <Suspense fallback={<Stack gap="xs">{t.app.loadingDoublesDiagram}</Stack>}>
+                      <ProfilerWrapper id="DoublesCourtDiagram">
+                        <DoublesCourtDiagram
+                          players={match.players}
+                          server={match.server}
+                          cardBg={cardBg}
+                          mutedText={mutedText}
+                          teammateServerMap={match.teammateServerMap}
+                          t={t}
+                        />
+                      </ProfilerWrapper>
+                    </Suspense>
+                  )}
 
-            {!scoreOnlyMode && (
-              <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
-                <ProfilerWrapper id="MatchDetailPanels">
-                  <MatchDetailPanels
+                  <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
+                    <ProfilerWrapper id="MatchInsightsCard-Main">
+                      <MatchInsightsCard
+                        cardBg={cardBg}
+                        mutedText={mutedText}
+                        match={match}
+                        gamesNeeded={gamesNeeded}
+                        matchIsLive={matchIsLive}
+                        elapsedMs={displayElapsedMs}
+                        clockRunning={match.clockRunning}
+                        onToggleClock={handleClockToggle}
+                        t={t}
+                      />
+                    </ProfilerWrapper>
+                  </Suspense>
+                </Stack>
+              )}
+
+            {menuSection === 'settings' && (
+                <Stack gap="lg">
+                  <MatchSettingsCard
                     cardBg={cardBg}
                     mutedText={mutedText}
                     match={match}
-                    gamesNeeded={gamesNeeded}
-                    matchIsLive={matchIsLive}
-                    elapsedMs={displayElapsedMs}
-                    completedMatches={completedMatches}
                     onRaceToChange={handleRaceToChange}
                     onBestOfChange={handleBestOfChange}
                     onWinByTwoToggle={handleWinByTwoToggle}
                     onDoublesToggle={handleDoublesModeToggle}
+                    t={t}
+                  />
+                  <MatchControlsCard
+                    cardBg={cardBg}
                     onSwapEnds={handleSwapEnds}
                     onToggleServer={handleServerToggle}
                     onResetGame={handleResetGame}
                     onResetMatch={handleResetMatch}
-                    onToggleClock={handleClockToggle}
-                    onClearHistory={handleClearHistory}
-                    onApplyProfile={handleApplySavedName}
-                    onSaveProfile={handleSavePlayerName}
                     t={t}
                   />
-                </ProfilerWrapper>
-              </Suspense>
-            )}
+                </Stack>
+              )}
+
+            {menuSection === 'history' && (
+                <Stack gap="lg">
+                  <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
+                    <GameHistoryCard
+                      cardBg={cardBg}
+                      mutedText={mutedText}
+                      games={match.completedGames}
+                      onClearHistory={handleClearHistory}
+                      onShowStats={scrollStatsIntoView}
+                      t={t}
+                    />
+                  </Suspense>
+                  <div ref={statsSectionRef}>
+                    <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
+                      <MatchStatsPanel
+                        cardBg={cardBg}
+                        mutedText={mutedText}
+                        matchHistory={completedMatches}
+                        onExit={() => selectSection('score')}
+                        t={t}
+                      />
+                    </Suspense>
+                  </div>
+                </Stack>
+              )}
 
             <ScoreOnlyOverlays
               active={scoreOnlyMode && !simpleScoreMode}
