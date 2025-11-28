@@ -90,6 +90,16 @@ export const useMatchController = (t: Translations) => {
       const wasServing = state.server === playerId
       const nextServerMap = { ...state.teammateServerMap }
 
+      // Auto-start clock when adding a point (if not already running)
+      let clockRunning = state.clockRunning
+      let clockStartedAt = state.clockStartedAt
+      let clockElapsedMs = state.clockElapsedMs
+
+      if (delta > 0 && !clockRunning) {
+        clockRunning = true
+        clockStartedAt = Date.now()
+      }
+
       const players = state.players.map((player) => {
         if (player.id !== playerId) {
           return {
@@ -105,7 +115,7 @@ export const useMatchController = (t: Translations) => {
       })
 
       if (delta < 0) {
-        return { ...state, players }
+        return { ...state, players, clockRunning, clockStartedAt, clockElapsedMs }
       }
 
       const scorer = players.find((player) => player.id === playerId)!
@@ -119,13 +129,9 @@ export const useMatchController = (t: Translations) => {
       }
 
       const opponent = players.find((player) => player.id !== playerId)!
-      const liveElapsedMs = getLiveElapsedMs(state)
+      const liveElapsedMs = getLiveElapsedMs({ ...state, clockRunning, clockStartedAt, clockElapsedMs })
 
       if (didWinGame(scorer.points, opponent.points, state)) {
-        let clockRunning = state.clockRunning
-        let clockStartedAt = state.clockStartedAt
-        let clockElapsedMs = state.clockElapsedMs
-
         const completedGame: CompletedGame = {
           id: createGameId(),
           number: state.completedGames.length + 1,
@@ -155,6 +161,7 @@ export const useMatchController = (t: Translations) => {
         const isMatchWin = winner.games >= gamesNeeded
         const matchWinner = isMatchWin ? playerId : state.matchWinner
 
+        // Stop clock when match is finished
         if (isMatchWin) {
           clockElapsedMs = 0
           clockRunning = false
@@ -197,9 +204,164 @@ export const useMatchController = (t: Translations) => {
         ...state,
         players,
         server: playerId,
+        clockRunning,
+        clockStartedAt,
+        clockElapsedMs,
         teammateServerMap: nextServerMap,
       }
     })
+  }
+
+  const handleSetScores = (scores: { playerId: PlayerId; points: number }[]) => {
+    perfMonitor.recordUserFlow({
+      type: 'set-scores-directly',
+      timestamp: performance.now(),
+      metadata: { scores },
+    })
+
+    // Track what notification to show after state update
+    let toastInfo: { title: string; status: 'success' } | null = null
+
+    pushUpdate((state) => {
+      // In Coach mode, if match is finished, auto-start a new match first
+      let currentState = state
+      if (state.matchWinner) {
+        currentState = {
+          ...state,
+          players: state.players.map((player) => ({
+            ...player,
+            points: 0,
+            games: 0,
+            teammates: player.teammates.map((mate) => ({ ...mate })),
+          })),
+          matchWinner: null,
+          server: 'playerA',
+          teammateServerMap: createDefaultTeammateServerMap(),
+          // Keep completedGames - don't clear history
+          clockRunning: false,
+          clockStartedAt: null,
+          clockElapsedMs: 0,
+        }
+      }
+
+      // Apply the new scores
+      const players = currentState.players.map((player) => {
+        const scoreEntry = scores.find((s) => s.playerId === player.id)
+        const nextPoints = scoreEntry
+          ? clampPoints(scoreEntry.points, currentState.maxPoint)
+          : player.points
+        return {
+          ...player,
+          points: nextPoints,
+          teammates: player.teammates.map((mate) => ({ ...mate })),
+        }
+      })
+
+      // Check if either player has won the game
+      const playerA = players.find((p) => p.id === 'playerA')!
+      const playerB = players.find((p) => p.id === 'playerB')!
+
+      const playerAWins = didWinGame(playerA.points, playerB.points, currentState)
+      const playerBWins = didWinGame(playerB.points, playerA.points, currentState)
+
+      // If no one wins, just update points
+      if (!playerAWins && !playerBWins) {
+        return { ...currentState, players }
+      }
+
+      // Determine winner (if both would win, higher score wins; if tied, playerA wins)
+      const winnerId: PlayerId =
+        playerAWins && playerBWins
+          ? playerA.points >= playerB.points
+            ? 'playerA'
+            : 'playerB'
+          : playerAWins
+            ? 'playerA'
+            : 'playerB'
+
+      const winner = players.find((p) => p.id === winnerId)!
+
+      // Coach mode: don't record duration (set to 0)
+      const completedGame: CompletedGame = {
+        id: createGameId(),
+        number: currentState.completedGames.length + 1,
+        timestamp: Date.now(),
+        winnerId,
+        winnerName: winner.name,
+        durationMs: 0, // No time tracking in coach mode
+        scores: players.reduce<CompletedGame['scores']>(
+          (acc, player) => {
+            acc[player.id] = { name: player.name, points: player.points }
+            return acc
+          },
+          {} as CompletedGame['scores'],
+        ),
+      }
+
+      const completedGamesWithLatest = [completedGame, ...currentState.completedGames]
+
+      const updatedPlayers = players.map((player) => ({
+        ...player,
+        points: 0,
+        games: player.id === winnerId ? player.games + 1 : player.games,
+        teammates: player.teammates.map((mate) => ({ ...mate })),
+      }))
+
+      const updatedWinner = updatedPlayers.find((p) => p.id === winnerId)!
+      const isMatchWin = updatedWinner.games >= gamesNeeded
+
+      // Set toast info to show after state update (avoid double toast in StrictMode)
+      toastInfo = {
+        title: isMatchWin
+          ? t.toasts.matchWin(updatedWinner.name)
+          : t.toasts.gameWin(updatedWinner.name),
+        status: 'success',
+      }
+
+      if (isMatchWin) {
+        recordCompletedMatch(
+          buildCompletedMatchSummary({
+            games: completedGamesWithLatest,
+            match: currentState,
+            winnerId,
+            winnerName: updatedWinner.name,
+            durationMs: 0, // No time tracking in coach mode
+          }),
+        )
+
+        // Auto-start new match but KEEP the game history
+        return {
+          ...currentState,
+          players: currentState.players.map((player) => ({
+            ...player,
+            points: 0,
+            games: 0,
+            teammates: player.teammates.map((mate) => ({ ...mate })),
+          })),
+          matchWinner: null,
+          server: 'playerA',
+          teammateServerMap: createDefaultTeammateServerMap(),
+          completedGames: completedGamesWithLatest.slice(0, GAME_HISTORY_LIMIT), // Keep history!
+          clockRunning: false,
+          clockStartedAt: null,
+          clockElapsedMs: 0,
+        }
+      }
+
+      return {
+        ...currentState,
+        players: updatedPlayers,
+        server: winnerId,
+        matchWinner: null,
+        completedGames: completedGamesWithLatest.slice(0, GAME_HISTORY_LIMIT),
+        // Keep clock state as is (don't modify it in coach mode)
+      }
+    })
+
+    // Show toast after state update to avoid StrictMode double-invocation
+    if (toastInfo) {
+      showToast(toastInfo)
+    }
   }
 
   const handleUndo = () => {
@@ -465,6 +627,7 @@ export const useMatchController = (t: Translations) => {
     actions: {
       handleNameChange,
       handlePointChange,
+      handleSetScores,
       handleUndo,
       handleResetGame,
       handleResetMatch,

@@ -24,6 +24,7 @@ export interface Translations {
     scoreSection: string
     settingsSection: string
     historySection: string
+    coachSection: string
   }
   app: {
     documentTitle: string
@@ -158,6 +159,13 @@ export interface Translations {
   simpleScore: {
     hint: string
   }
+  coach: {
+    title: string
+    hint: string
+    applyScores: string
+    player1Label: string
+    player2Label: string
+  }
   toasts: {
     matchFinishedTitle: string
     matchFinishedBody: string
@@ -227,6 +235,7 @@ export const translations: Record<Language, Translations> = {
       scoreSection: 'Score counter',
       settingsSection: 'Match settings',
       historySection: 'History & stats',
+      coachSection: 'Coach',
     },
     app: {
       documentTitle: 'Badminton Score Tracker',
@@ -379,6 +388,13 @@ export const translations: Record<Language, Translations> = {
     simpleScore: {
       hint: 'Tap the buttons to adjust score.',
     },
+    coach: {
+      title: 'Coach mode',
+      hint: 'Enter scores directly for each player.',
+      applyScores: 'Apply scores',
+      player1Label: 'Player 1',
+      player2Label: 'Player 2',
+    },
     toasts: {
       matchFinishedTitle: 'Match finished',
       matchFinishedBody: 'Start a new match to keep scoring.',
@@ -443,6 +459,7 @@ export const translations: Record<Language, Translations> = {
       scoreSection: 'Compteur de score',
       settingsSection: 'Paramètres du match',
       historySection: 'Historique et stats',
+      coachSection: 'Coach',
     },
     app: {
       documentTitle: 'Suivi de score badminton',
@@ -594,6 +611,13 @@ export const translations: Record<Language, Translations> = {
     },
     simpleScore: {
       hint: 'Touchez les boutons pour ajuster le score.',
+    },
+    coach: {
+      title: 'Mode coach',
+      hint: 'Entrez les scores directement pour chaque joueur.',
+      applyScores: 'Appliquer les scores',
+      player1Label: 'Joueur 1',
+      player2Label: 'Joueur 2',
     },
     toasts: {
       matchFinishedTitle: 'Match terminé',

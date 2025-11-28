@@ -15,6 +15,7 @@ import { PlayerGridSection } from './components/PlayerGridSection'
 import { MatchSettingsCard } from './components/MatchSettingsCard'
 import { MatchControlsCard } from './components/MatchControlsCard'
 import { ScoreOnlyOverlays } from './components/ScoreOnlyOverlays'
+import { CoachScoreEntryCard } from './components/CoachScoreEntryCard'
 import { ProfilerWrapper } from './components/ProfilerWrapper'
 import { useMatchController } from './hooks/useMatchController'
 import { useThemeColors } from './hooks/useThemeColors'
@@ -90,13 +91,14 @@ function App() {
   const [simpleScoreMode, setSimpleScoreMode] = useState(() =>
     readStoredBoolean(STORAGE_KEYS.simpleScore),
   )
-  type MenuSection = 'score' | 'settings' | 'history'
+  type MenuSection = 'score' | 'settings' | 'history' | 'coach'
   const [menuOpened, setMenuOpened] = useState(false)
   const [menuSection, setMenuSection] = useState<MenuSection>('score')
   const statsSectionRef = useRef<HTMLDivElement | null>(null)
   const {
     handleNameChange,
     handlePointChange,
+    handleSetScores,
     handleUndo,
     handleResetGame,
     handleResetMatch,
@@ -275,6 +277,7 @@ function App() {
                 ['score', t.menu.scoreSection],
                 ['settings', t.menu.settingsSection],
                 ['history', t.menu.historySection],
+                ['coach', t.menu.coachSection],
               ] as const).map(([section, label]) => (
                 <Button
                   key={section}
@@ -451,6 +454,22 @@ function App() {
                       />
                     </Suspense>
                   </div>
+                </Stack>
+              )}
+
+            {menuSection === 'coach' && (
+                <Stack gap="lg">
+                  <CoachScoreEntryCard
+                    players={match.players}
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    savedNames={match.savedNames}
+                    onSetScores={handleSetScores}
+                    onNameChange={handleNameChange}
+                    onSaveName={handleSavePlayerName}
+                    onApplySavedName={handleApplySavedName}
+                    t={t}
+                  />
                 </Stack>
               )}
 

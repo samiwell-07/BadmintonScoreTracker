@@ -53,10 +53,10 @@ export interface MatchState {
 export const STORAGE_KEY = 'bst-score-state'
 export const HISTORY_LIMIT = 25
 export const BEST_OF_OPTIONS = [1, 3, 5] as const
-export const GAME_HISTORY_LIMIT = 25
+export const GAME_HISTORY_LIMIT = 50
 export const SAVED_NAMES_LIMIT = 8
 export const MATCH_SUMMARY_STORAGE_KEY = 'bst-completed-matches'
-export const MATCH_SUMMARY_LIMIT = 12
+export const MATCH_SUMMARY_LIMIT = 50
 
 export interface CompletedMatchPlayerSummary {
   playerId: PlayerId

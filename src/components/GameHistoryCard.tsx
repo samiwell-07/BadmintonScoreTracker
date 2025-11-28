@@ -73,14 +73,16 @@ export const GameHistoryCard = ({
           </Text>
         ) : collapsed ? null : games.length === 0 ? null : (
           <Stack gap="sm">
-            {games.map((game) => {
+            {games.map((game, index) => {
               const lineup: PlayerId[] = ['playerA', 'playerB']
+              // Display game number as position in list (newest first, so reverse the numbering)
+              const displayNumber = games.length - index
               return (
                 <Card key={game.id} withBorder radius="md" p="md" shadow="sm">
                   <Stack gap={4}>
                     <Group justify="space-between" wrap="wrap" gap="xs">
                       <Text size="sm" fw={600}>
-                        {t.history.gameLabel(game.number)}
+                        {t.history.gameLabel(displayNumber)}
                       </Text>
                       <Text size="xs" c={mutedText}>
                         {formatRelativeTime(game.timestamp, t.relativeTime)}
