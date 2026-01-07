@@ -235,7 +235,7 @@ export const translations: Record<Language, Translations> = {
       scoreSection: 'Score counter',
       settingsSection: 'Match settings',
       historySection: 'History & stats',
-      coachSection: 'Coach',
+      coachSection: 'Manual Entry',
     },
     app: {
       documentTitle: 'Badminton Score Tracker',
@@ -389,7 +389,7 @@ export const translations: Record<Language, Translations> = {
       hint: 'Tap the buttons to adjust score.',
     },
     coach: {
-      title: 'Coach mode',
+      title: 'Manual Entry Match',
       hint: 'Enter scores directly for each player.',
       applyScores: 'Apply scores',
       player1Label: 'Player 1',
@@ -459,7 +459,7 @@ export const translations: Record<Language, Translations> = {
       scoreSection: 'Compteur de score',
       settingsSection: 'Paramètres du match',
       historySection: 'Historique et stats',
-      coachSection: 'Coach',
+      coachSection: 'Saisie manuelle',
     },
     app: {
       documentTitle: 'Suivi de score badminton',
@@ -613,7 +613,7 @@ export const translations: Record<Language, Translations> = {
       hint: 'Touchez les boutons pour ajuster le score.',
     },
     coach: {
-      title: 'Mode coach',
+      title: 'Match saisie manuelle',
       hint: 'Entrez les scores directement pour chaque joueur.',
       applyScores: 'Appliquer les scores',
       player1Label: 'Joueur 1',

@@ -15,6 +15,7 @@ import {
 } from '../types/match'
 import { clampPoints, didWinGame } from '../utils/match'
 import { showToast } from '../utils/notifications'
+import { vibrateGameWin, vibrateMatchWin } from '../utils/vibration'
 import type { Translations } from '../i18n/translations'
 import { perfMonitor } from '../utils/performance'
 import { createFreshClockState, getLiveElapsedMs } from './matchController/clock'
@@ -168,6 +169,13 @@ export const useMatchController = (t: Translations) => {
           clockStartedAt = null
         }
 
+        // Vibrate on game/match win
+        if (isMatchWin) {
+          vibrateMatchWin()
+        } else {
+          vibrateGameWin()
+        }
+
         showToast({
           title: isMatchWin
             ? t.toasts.matchWin(winner.name)
@@ -310,6 +318,13 @@ export const useMatchController = (t: Translations) => {
       const updatedWinner = updatedPlayers.find((p) => p.id === winnerId)!
       const isMatchWin = updatedWinner.games >= gamesNeeded
 
+      // Vibrate on game/match win
+      if (isMatchWin) {
+        vibrateMatchWin()
+      } else {
+        vibrateGameWin()
+      }
+
       // Set toast info to show after state update (avoid double toast in StrictMode)
       toastInfo = {
         title: isMatchWin
@@ -392,6 +407,7 @@ export const useMatchController = (t: Translations) => {
 
   const handleResetMatch = () => {
     perfMonitor.recordUserFlow({ type: 'reset-match', timestamp: performance.now() })
+    setHistory([]) // Clear history to reset streak tracking
     pushUpdate((state) => ({
       ...state,
       players: state.players.map((player) => ({
@@ -403,6 +419,7 @@ export const useMatchController = (t: Translations) => {
       matchWinner: null,
       server: 'playerA',
       teammateServerMap: createDefaultTeammateServerMap(),
+      favoritePlayerIds: [], // Reset favorites on match reset
       ...createFreshClockState(),
     }))
   }
@@ -616,6 +633,19 @@ export const useMatchController = (t: Translations) => {
     })
   }
 
+  const handleToggleFavoritePlayer = (playerId: PlayerId) => {
+    pushUpdate((state) => {
+      const currentFavorites = state.favoritePlayerIds ?? []
+      const isFavorite = currentFavorites.includes(playerId)
+      return {
+        ...state,
+        favoritePlayerIds: isFavorite
+          ? currentFavorites.filter((id) => id !== playerId)
+          : [...currentFavorites, playerId],
+      }
+    })
+  }
+
   const matchIsLive = !match.matchWinner
 
   return {
@@ -642,6 +672,7 @@ export const useMatchController = (t: Translations) => {
       handleSaveTeammateName,
       handleApplySavedName,
       handleClockToggle,
+      handleToggleFavoritePlayer,
       pushUpdate,
     },
   }

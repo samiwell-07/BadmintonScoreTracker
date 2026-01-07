@@ -17,11 +17,13 @@ import { MatchControlsCard } from './components/MatchControlsCard'
 import { ScoreOnlyOverlays } from './components/ScoreOnlyOverlays'
 import { CoachScoreEntryCard } from './components/CoachScoreEntryCard'
 import { ProfilerWrapper } from './components/ProfilerWrapper'
+import { VictoryCelebration } from './components/VictoryCelebration'
 import { useMatchController } from './hooks/useMatchController'
 import { useThemeColors } from './hooks/useThemeColors'
 import { useLanguage } from './hooks/useLanguage'
+import { useHeartbeatSound } from './hooks/useHeartbeatSound'
 import { perfMonitor } from './utils/performance'
-import type { MatchState } from './types/match'
+import type { MatchState, PlayerId } from './types/match'
 import type { MatchConfig } from './utils/match'
 const STORAGE_KEYS = {
   scoreOnly: 'scoreOnlyMode',
@@ -113,8 +115,36 @@ function App() {
     handleClockToggle,
     handleSwapTeammates,
     handleClearHistory,
+    handleToggleFavoritePlayer,
     pushUpdate,
   } = actions
+  const [showVictoryCelebration, setShowVictoryCelebration] = useState(false)
+  const [celebrationWinnerName, setCelebrationWinnerName] = useState('')
+  const prevMatchWinnerRef = useRef<PlayerId | null>(null)
+
+  // Trigger celebration when a favorite player wins
+  useEffect(() => {
+    const currentWinner = match.matchWinner
+    const prevWinner = prevMatchWinnerRef.current
+
+    if (currentWinner && currentWinner !== prevWinner) {
+      const favorites = match.favoritePlayerIds ?? []
+      if (favorites.includes(currentWinner)) {
+        const winner = match.players.find((p) => p.id === currentWinner)
+        if (winner) {
+          setCelebrationWinnerName(winner.name)
+          setShowVictoryCelebration(true)
+        }
+      }
+    }
+
+    prevMatchWinnerRef.current = currentWinner
+  }, [match.matchWinner, match.favoritePlayerIds, match.players])
+
+  const handleCelebrationComplete = useCallback(() => {
+    setShowVictoryCelebration(false)
+  }, [])
+
   const toggleMenu = useCallback(() => {
     setMenuOpened((previous) => !previous)
   }, [])
@@ -139,6 +169,80 @@ function App() {
     }),
     [match.maxPoint, match.raceTo, match.winByTwo],
   )
+
+  // Detect critical game point (deuce at raceTo-1 or higher, e.g., 20-20 in a 21-point game)
+  const isCriticalPoint = useMemo(() => {
+    if (match.matchWinner) return false // No heartbeat if match is over
+    const playerA = match.players.find((p) => p.id === 'playerA')
+    const playerB = match.players.find((p) => p.id === 'playerB')
+    if (!playerA || !playerB) return false
+    const minDeuceScore = match.raceTo - 1 // e.g., 20 for a 21-point game
+    return (
+      playerA.points >= minDeuceScore &&
+      playerB.points >= minDeuceScore &&
+      playerA.points === playerB.points
+    )
+  }, [match.players, match.raceTo, match.matchWinner])
+
+  // Play heartbeat sound during critical points
+  useHeartbeatSound(isCriticalPoint)
+
+  const winningStreaks = useMemo(() => {
+    const streaks: Record<PlayerId, number> = { playerA: 0, playerB: 0 }
+    if (history.length === 0) return streaks
+
+    const currentPlayerA = match.players.find((p) => p.id === 'playerA')?.points ?? 0
+    const currentPlayerB = match.players.find((p) => p.id === 'playerB')?.points ?? 0
+
+    let lastA = currentPlayerA
+    let lastB = currentPlayerB
+    let streakPlayer: PlayerId | null = null
+    let streakCount = 0
+
+    for (const prevState of history) {
+      const histA = prevState.players.find((p) => p.id === 'playerA')?.points ?? 0
+      const histB = prevState.players.find((p) => p.id === 'playerB')?.points ?? 0
+
+      const playerAScored = lastA > histA
+      const playerBScored = lastB > histB
+
+      // Skip entries where no points changed (settings changes, name changes, etc.)
+      if (!playerAScored && !playerBScored) {
+        lastA = histA
+        lastB = histB
+        continue
+      }
+
+      if (playerAScored && !playerBScored) {
+        if (streakPlayer === null || streakPlayer === 'playerA') {
+          streakPlayer = 'playerA'
+          streakCount++
+        } else {
+          break
+        }
+      } else if (playerBScored && !playerAScored) {
+        if (streakPlayer === null || streakPlayer === 'playerB') {
+          streakPlayer = 'playerB'
+          streakCount++
+        } else {
+          break
+        }
+      } else {
+        // Both scored somehow - shouldn't happen, but break to be safe
+        break
+      }
+
+      lastA = histA
+      lastB = histB
+    }
+
+    if (streakPlayer) {
+      streaks[streakPlayer] = streakCount
+    }
+    
+    console.log('Winning streaks:', streaks, 'History length:', history.length)
+    return streaks
+  }, [history, match.players])
 
   const handleScoreOnlyToggle = useCallback(() => {
     perfMonitor.recordUserFlow({ type: 'toggle-score-only-view', timestamp: performance.now() })
@@ -325,6 +429,36 @@ function App() {
   return (
     <ProfilerWrapper id="App-FullMode">
       {menuInterface}
+      {/* Heartbeat red pulse overlay for critical points */}
+      {isCriticalPoint && (
+        <>
+          <style>
+            {`
+              @keyframes heartbeatScreenPulse {
+                0%, 100% {
+                  opacity: 0;
+                }
+                50% {
+                  opacity: 1;
+                }
+              }
+            `}
+          </style>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255, 0, 0, 0.15)',
+              pointerEvents: 'none',
+              zIndex: 9998,
+              animation: 'heartbeatScreenPulse 1s ease-in-out infinite',
+            }}
+          />
+        </>
+      )}
       <Box
         style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
       >
@@ -364,6 +498,8 @@ function App() {
                       savedNames={match.savedNames}
                       doublesMode={match.doublesMode}
                       teammateServerMap={match.teammateServerMap}
+                      winningStreaks={winningStreaks}
+                      favoritePlayerIds={match.favoritePlayerIds ?? []}
                       onNameChange={handleNameChange}
                       onPointChange={handlePointChange}
                       onApplySavedName={handleApplySavedName}
@@ -371,6 +507,7 @@ function App() {
                       onTeammateNameChange={handleTeammateNameChange}
                       onSaveTeammateName={handleSaveTeammateName}
                       onSwapTeammates={handleSwapTeammates}
+                      onToggleFavorite={handleToggleFavoritePlayer}
                       t={t}
                     />
                   </ProfilerWrapper>
@@ -488,6 +625,11 @@ function App() {
           </Stack>
         </Container>
       </Box>
+      <VictoryCelebration
+        show={showVictoryCelebration}
+        winnerName={celebrationWinnerName}
+        onComplete={handleCelebrationComplete}
+      />
     </ProfilerWrapper>
   )
 }

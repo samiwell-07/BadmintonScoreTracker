@@ -18,6 +18,8 @@ interface PlayerGridSectionProps {
   savedNames: PlayerProfile[]
   doublesMode: boolean
   teammateServerMap: Record<PlayerId, string>
+  winningStreaks: Record<PlayerId, number>
+  favoritePlayerIds: PlayerId[]
   onNameChange: (playerId: PlayerId, name: string) => void
   onPointChange: (playerId: PlayerId, delta: number) => void
   onApplySavedName: (playerId: PlayerId, profile: PlayerProfile) => void
@@ -25,6 +27,7 @@ interface PlayerGridSectionProps {
   onTeammateNameChange: (playerId: PlayerId, teammateId: string, name: string) => void
   onSaveTeammateName: (playerId: PlayerId, teammateId: string) => void
   onSwapTeammates: (playerId: PlayerId) => void
+  onToggleFavorite: (playerId: PlayerId) => void
   t: Translations
 }
 
@@ -40,6 +43,8 @@ const PlayerGridSectionComponent = ({
   savedNames,
   doublesMode,
   teammateServerMap,
+  winningStreaks,
+  favoritePlayerIds,
   onNameChange,
   onPointChange,
   onApplySavedName,
@@ -47,6 +52,7 @@ const PlayerGridSectionComponent = ({
   onTeammateNameChange,
   onSaveTeammateName,
   onSwapTeammates,
+  onToggleFavorite,
   t,
 }: PlayerGridSectionProps) => {
   const rotationSummary = useMemo(
@@ -101,6 +107,8 @@ const PlayerGridSectionComponent = ({
               matchIsLive={matchIsLive}
               savedNames={savedNames}
               doublesMode={doublesMode}
+              winningStreak={winningStreaks[player.id]}
+              isFavorite={favoritePlayerIds.includes(player.id)}
               onNameChange={onNameChange}
               onPointChange={onPointChange}
               onApplySavedName={onApplySavedName}
@@ -108,6 +116,7 @@ const PlayerGridSectionComponent = ({
               onTeammateNameChange={onTeammateNameChange}
               onSaveTeammateName={onSaveTeammateName}
               onSwapTeammates={onSwapTeammates}
+              onToggleFavorite={onToggleFavorite}
               t={t}
             />
           )

@@ -177,6 +177,11 @@ export const readFromStorage = (): MatchState => {
         normalizedPlayers,
         parsed.teammateServerMap,
       ),
+      favoritePlayerIds: Array.isArray(parsed.favoritePlayerIds)
+        ? parsed.favoritePlayerIds.filter(
+            (id: unknown) => id === 'playerA' || id === 'playerB'
+          )
+        : DEFAULT_STATE.favoritePlayerIds,
     }
   } catch (error) {
     console.warn('Failed to parse stored match state', error)

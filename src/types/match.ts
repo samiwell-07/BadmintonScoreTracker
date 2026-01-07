@@ -48,6 +48,7 @@ export interface MatchState {
   savedNames: PlayerProfile[]
   doublesMode: boolean
   teammateServerMap: Record<PlayerId, string>
+  favoritePlayerIds: PlayerId[]
 }
 
 export const STORAGE_KEY = 'bst-score-state'
@@ -141,4 +142,5 @@ export const DEFAULT_STATE: MatchState = {
   savedNames: [],
   doublesMode: false,
   teammateServerMap: createDefaultTeammateServerMap(),
+  favoritePlayerIds: [],
 }
