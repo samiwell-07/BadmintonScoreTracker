@@ -126,6 +126,8 @@ export interface Translations {
     saveTeammateName: (name: string) => string
     clearTeammateName: string
     savedNamesTooltip: string
+    addToFavorites: string
+    removeFromFavorites: string
   }
   savedNamesMenu: {
     menuLabel: string
@@ -151,6 +153,10 @@ export interface Translations {
     gameLabel: (gameNumber: number) => string
     winnerBadge: (name: string) => string
     statsButton: string
+    shareResult: string
+    shareText: (player1: string, score1: number, player2: string, score2: number, duration: string, date: string) => string
+    shareCopied: string
+    shareError: string
   }
   overlays: {
     servingLabel: string
@@ -158,6 +164,7 @@ export interface Translations {
   }
   simpleScore: {
     hint: string
+    tapToScore: string
   }
   coach: {
     title: string
@@ -207,6 +214,52 @@ export interface Translations {
     profileWinRateLabel: string
     profilePointsLabel: string
     profileAvgDurationLabel: string
+  }
+  onboarding?: {
+    welcome: string
+    welcomeDesc: string
+    scoring: string
+    scoringDesc: string
+    history: string
+    historyDesc: string
+    shortcuts: string
+    shortcutsDesc: string
+    skip: string
+    back: string
+    next: string
+    getStarted: string
+  }
+  dataManagement?: {
+    title: string
+    description: string
+    export: string
+    import: string
+    exportTitle: string
+    exportHelp: string
+    exportError: string
+    exportErrorMsg: string
+    downloadFile: string
+    downloadSuccess: string
+    downloadError: string
+    downloadErrorMsg: string
+    importTitle: string
+    importHelp: string
+    importPlaceholder: string
+    importWarning: string
+    importWarningHistoryOnly: string
+    importCurrentMatch: string
+    importData: string
+    importSuccess: string
+    importError: string
+    importErrorMsg: string
+  }
+  settings2?: {
+    soundEffects: string
+    soundEffectsDesc: string
+    hapticFeedback: string
+    hapticFeedbackDesc: string
+    showKeyboardShortcuts: string
+    appVersion: string
   }
 }
 
@@ -354,6 +407,8 @@ export const translations: Record<Language, Translations> = {
       saveTeammateName: (name) => `Save "${name}"`,
       clearTeammateName: 'Clear teammate name',
       savedNamesTooltip: 'Saved names',
+      addToFavorites: 'Add to favorites',
+      removeFromFavorites: 'Remove from favorites',
     },
     savedNamesMenu: {
       menuLabel: 'Saved names',
@@ -380,6 +435,11 @@ export const translations: Record<Language, Translations> = {
       gameLabel: (number) => `Game ${number}`,
       winnerBadge: (name) => `Winner · ${name}`,
       statsButton: 'Stats',
+      shareResult: 'Share',
+      shareText: (player1, score1, player2, score2, duration, date) =>
+        `🏸 Badminton Match Result\n\n${player1}: ${score1}\n${player2}: ${score2}\n\n⏱️ Duration: ${duration}\n📅 ${date}`,
+      shareCopied: 'Result copied to clipboard!',
+      shareError: 'Could not share result',
     },
     overlays: {
       servingLabel: 'Serving player',
@@ -387,6 +447,7 @@ export const translations: Record<Language, Translations> = {
     },
     simpleScore: {
       hint: 'Tap the buttons to adjust score.',
+      tapToScore: 'Tap anywhere to add point',
     },
     coach: {
       title: 'Manual Entry Match',
@@ -443,6 +504,52 @@ export const translations: Record<Language, Translations> = {
       profileWinRateLabel: 'Win rate',
       profilePointsLabel: 'Avg points',
       profileAvgDurationLabel: 'Avg match duration',
+    },
+    onboarding: {
+      welcome: 'Welcome to Badminton Score Tracker!',
+      welcomeDesc: 'Track your badminton matches with ease. This quick tour will show you the main features.',
+      scoring: 'Easy Scoring',
+      scoringDesc: 'Tap +1 to add points, -1 to correct mistakes. The app automatically tracks games, service, and match winner.',
+      history: 'Match History',
+      historyDesc: 'Your completed games are saved automatically. View stats, share results, and track your progress over time.',
+      shortcuts: 'Keyboard Shortcuts',
+      shortcutsDesc: 'Use these shortcuts for faster scoring:',
+      skip: 'Skip',
+      back: 'Back',
+      next: 'Next',
+      getStarted: "Let's Go!",
+    },
+    dataManagement: {
+      title: 'Data Management',
+      description: 'Backup and restore your match data',
+      export: 'Export Backup',
+      import: 'Import Backup',
+      exportTitle: 'Export Data',
+      exportHelp: 'Copy this data or download as a file to backup your matches.',
+      exportError: 'Export Error',
+      exportErrorMsg: 'Failed to export data',
+      downloadFile: 'Download File',
+      downloadSuccess: 'Backup downloaded',
+      downloadError: 'Download Error',
+      downloadErrorMsg: 'Failed to download file',
+      importTitle: 'Import Data',
+      importHelp: 'Paste your backup data or upload a backup file.',
+      importPlaceholder: 'Paste backup data here...',
+      importWarning: '⚠️ This will replace your current match and history, then reload the app.',
+      importWarningHistoryOnly: '⚠️ This will replace your match history only, then reload the app.',
+      importCurrentMatch: 'Also replace current match (unchecked = history only)',
+      importData: 'Import Data',
+      importSuccess: 'Data imported successfully. Reloading...',
+      importError: 'Import Error',
+      importErrorMsg: 'Invalid backup file format',
+    },
+    settings2: {
+      soundEffects: 'Sound Effects',
+      soundEffectsDesc: 'Play heartbeat sound during critical points',
+      hapticFeedback: 'Haptic Feedback',
+      hapticFeedbackDesc: 'Vibrate on game and match wins',
+      showKeyboardShortcuts: 'Show Keyboard Shortcuts',
+      appVersion: 'App Version',
     },
   },
   fr: {
@@ -578,6 +685,8 @@ export const translations: Record<Language, Translations> = {
       saveTeammateName: (name) => `Enregistrer "${name}"`,
       clearTeammateName: 'Effacer le nom du partenaire',
       savedNamesTooltip: 'Noms enregistrés',
+      addToFavorites: 'Ajouter aux favoris',
+      removeFromFavorites: 'Retirer des favoris',
     },
     savedNamesMenu: {
       menuLabel: 'Noms enregistrés',
@@ -603,14 +712,18 @@ export const translations: Record<Language, Translations> = {
       eraseHistory: 'Effacer l’historique',
       gameLabel: (number) => `Jeu ${number}`,
       winnerBadge: (name) => `Vainqueur · ${name}`,
-      statsButton: 'Statistiques',
-    },
+      statsButton: 'Statistiques',      shareResult: 'Partager',
+      shareText: (player1, score1, player2, score2, duration, date) =>
+        `🏸 Résultat du match de badminton\n\n${player1}: ${score1}\n${player2}: ${score2}\n\n⏱️ Durée: ${duration}\n📅 ${date}`,
+      shareCopied: 'Résultat copié!',
+      shareError: 'Impossible de partager le résultat',    },
     overlays: {
       servingLabel: 'Joueur au service',
       swapButton: 'Échanger',
     },
     simpleScore: {
       hint: 'Touchez les boutons pour ajuster le score.',
+      tapToScore: 'Touchez pour ajouter un point',
     },
     coach: {
       title: 'Match saisie manuelle',
@@ -667,7 +780,53 @@ export const translations: Record<Language, Translations> = {
         `${matches} ${matches === 1 ? 'match' : 'matchs'}`,
       profileWinRateLabel: 'Taux de victoire',
       profilePointsLabel: 'Points moyens',
-      profileAvgDurationLabel: 'Durée moyenne d’un match',
+      profileAvgDurationLabel: 'Durée moyenne d\'un match',
+    },
+    onboarding: {
+      welcome: 'Bienvenue sur Badminton Score Tracker!',
+      welcomeDesc: 'Suivez vos matchs de badminton facilement. Ce petit tour va vous montrer les fonctionnalités principales.',
+      scoring: 'Comptage facile',
+      scoringDesc: 'Appuyez sur +1 pour ajouter des points, -1 pour corriger. L\'app suit automatiquement les jeux, le service et le gagnant.',
+      history: 'Historique des matchs',
+      historyDesc: 'Vos jeux terminés sont sauvegardés automatiquement. Consultez les stats, partagez les résultats et suivez vos progrès.',
+      shortcuts: 'Raccourcis clavier',
+      shortcutsDesc: 'Utilisez ces raccourcis pour compter plus vite:',
+      skip: 'Passer',
+      back: 'Retour',
+      next: 'Suivant',
+      getStarted: 'C\'est parti!',
+    },
+    dataManagement: {
+      title: 'Gestion des données',
+      description: 'Sauvegardez et restaurez vos données de match',
+      export: 'Exporter',
+      import: 'Importer',
+      exportTitle: 'Exporter les données',
+      exportHelp: 'Copiez ces données ou téléchargez un fichier pour sauvegarder vos matchs.',
+      exportError: 'Erreur d\'export',
+      exportErrorMsg: 'Impossible d\'exporter les données',
+      downloadFile: 'Télécharger',
+      downloadSuccess: 'Sauvegarde téléchargée',
+      downloadError: 'Erreur de téléchargement',
+      downloadErrorMsg: 'Impossible de télécharger le fichier',
+      importTitle: 'Importer les données',
+      importHelp: 'Collez vos données de sauvegarde ou uploadez un fichier.',
+      importPlaceholder: 'Collez les données ici...',
+      importWarning: '⚠️ Ceci remplacera votre match actuel et l\'historique, puis rechargera l\'app.',
+      importWarningHistoryOnly: '⚠️ Ceci remplacera uniquement l\'historique des matchs, puis rechargera l\'app.',
+      importCurrentMatch: 'Remplacer aussi le match actuel (décoché = historique seulement)',
+      importData: 'Importer',
+      importSuccess: 'Données importées avec succès. Rechargement...',
+      importError: 'Erreur d\'import',
+      importErrorMsg: 'Format de fichier invalide',
+    },
+    settings2: {
+      soundEffects: 'Effets sonores',
+      soundEffectsDesc: 'Jouer le battement de cœur pendant les points critiques',
+      hapticFeedback: 'Retour haptique',
+      hapticFeedbackDesc: 'Vibrer lors des victoires de jeu et de match',
+      showKeyboardShortcuts: 'Afficher les raccourcis clavier',
+      appVersion: 'Version de l\'app',
     },
   },
 }

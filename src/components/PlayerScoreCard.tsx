@@ -133,23 +133,25 @@ const PlayerScoreCardComponent = ({
     <Card
       withBorder
       radius="lg"
-      p="xl"
+      p={{ base: 'md', sm: 'xl' }}
       shadow="xl"
       style={{
         backgroundColor: cardBg,
         borderColor: isWinner ? theme.colors.green[5] : theme.colors.gray[4],
         borderWidth: isWinner ? 2 : 1,
+        overflow: 'hidden',
       }}
     >
-      <Stack gap="lg">
-        <Group justify="space-between" align="flex-start" gap="sm">
-          <Group gap="xs" align="flex-start" style={{ flex: 1 }} wrap="nowrap">
+      <Stack gap="lg" style={{ maxWidth: '100%', overflow: 'hidden' }}>
+        <Group justify="space-between" align="flex-start" gap="sm" wrap="wrap">
+          <Group gap="xs" align="flex-start" style={{ flex: 1, minWidth: 0 }} wrap="nowrap">
             <ActionIcon
               variant="subtle"
               color={isFavorite ? 'yellow' : 'gray'}
               size="lg"
               onClick={handleFavoriteToggle}
-              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              title={isFavorite ? t.playerCard.removeFromFavorites : t.playerCard.addToFavorites}
+              style={{ flexShrink: 0 }}
             >
               {isFavorite ? <IconStarFilled size={20} /> : <IconStar size={20} />}
             </ActionIcon>
@@ -160,14 +162,16 @@ const PlayerScoreCardComponent = ({
               onKeyDown={handleNameKeyDown}
               spellCheck={false}
               maxLength={24}
-              flex={1}
+              style={{ flex: 1, minWidth: 0 }}
               styles={{
                 input: {
-                  fontSize: '1.5rem',
+                  fontSize: 'clamp(1rem, 4vw, 1.5rem)',
                   fontWeight: 700,
                   backgroundColor: 'transparent',
                   border: 'none',
                   paddingLeft: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 },
               }}
             />
@@ -233,7 +237,7 @@ const PlayerScoreCardComponent = ({
                         order={1}
                         style={{
                           lineHeight: 1,
-                          fontSize: '4rem',
+                          fontSize: 'clamp(2.5rem, 10vw, 4rem)',
                           position: 'relative',
                           zIndex: 1,
                           ...(showMatchPointOnly && {

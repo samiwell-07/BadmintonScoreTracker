@@ -102,13 +102,17 @@ export const MatchHeader = ({
               </Button>
             </Tooltip>
           </Group>
-          <Group gap="xs" grow wrap="wrap">
+          <Group gap="xs" grow wrap="wrap" style={{ width: '100%' }}>
             <Button
               variant={scoreOnlyMode ? 'filled' : 'light'}
               color={scoreOnlyMode ? 'teal' : 'gray'}
               onClick={onToggleScoreOnly}
               aria-pressed={scoreOnlyMode}
-              style={{ flex: 1, minWidth: '8rem' }}
+              styles={{
+                root: { flex: 1, height: 'auto', minHeight: '2.25rem' },
+                inner: { whiteSpace: 'normal', wordBreak: 'break-word' },
+                label: { whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3, padding: '0.25rem 0' },
+              }}
             >
               {scoreOnlyMode ? t.header.scoreOnlyActive : t.header.scoreOnlyInactive}
             </Button>
@@ -117,7 +121,11 @@ export const MatchHeader = ({
               color={simpleScoreMode ? 'teal' : 'gray'}
               onClick={onToggleSimpleScore}
               aria-pressed={simpleScoreMode}
-              style={{ flex: 1, minWidth: '8rem' }}
+              styles={{
+                root: { flex: 1, height: 'auto', minHeight: '2.25rem' },
+                inner: { whiteSpace: 'normal', wordBreak: 'break-word' },
+                label: { whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3, padding: '0.25rem 0' },
+              }}
             >
               {simpleScoreMode ? t.header.simpleActive : t.header.simpleInactive}
             </Button>

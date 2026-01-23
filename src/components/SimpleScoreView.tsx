@@ -1,6 +1,7 @@
-import { Box, Button, Card, SimpleGrid, Stack, Text, Title } from '@mantine/core'
+import { Box, Button, Card, SimpleGrid, Stack, Text } from '@mantine/core'
 import type { PlayerId, PlayerState } from '../types/match'
 import type { Translations } from '../i18n/translations'
+import { AnimatedScore } from './AnimatedScore'
 
 interface SimpleScoreViewProps {
   players: PlayerState[]
@@ -10,6 +11,7 @@ interface SimpleScoreViewProps {
   onPointChange: (playerId: PlayerId, delta: number) => void
   onExit: () => void
   t: Translations
+  reducedMotion?: boolean
 }
 
 export const SimpleScoreView = ({
@@ -20,42 +22,65 @@ export const SimpleScoreView = ({
   onPointChange,
   onExit,
   t,
+  reducedMotion = false,
 }: SimpleScoreViewProps) => (
-  <Stack gap="lg" align="center">
+  <Stack gap="lg" align="center" w="100%" style={{ maxWidth: '100%' }}>
     <Button size="sm" color="teal" onClick={onExit}>
       {t.common.showFullView}
     </Button>
-    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg" w="100%">
+    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg" w="100%" style={{ maxWidth: '100%' }}>
       {players.map((player) => (
-        <Card key={player.id} radius="lg" withBorder shadow="lg" p="xl" style={{ backgroundColor: cardBg }}>
-          <Stack gap="md" align="center">
-            <Text size="lg" fw={600}>
+        <Card
+          key={player.id}
+          radius="lg"
+          withBorder
+          shadow="lg"
+          p={0}
+          style={{
+            backgroundColor: cardBg,
+            maxWidth: '100%',
+            overflow: 'hidden',
+            cursor: matchIsLive ? 'pointer' : 'default',
+            transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+            minHeight: '200px',
+          }}
+          onClick={() => matchIsLive && onPointChange(player.id, 1)}
+          onKeyDown={(e) => {
+            if (matchIsLive && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault()
+              onPointChange(player.id, 1)
+            }
+          }}
+          tabIndex={matchIsLive ? 0 : -1}
+          role="button"
+          aria-label={`Add point to ${player.name}`}
+          className={matchIsLive ? 'tap-to-score' : ''}
+        >
+          <Stack
+            gap="sm"
+            align="center"
+            justify="center"
+            style={{ maxWidth: '100%', height: '100%', padding: 'clamp(1rem, 4vw, 2rem)' }}
+          >
+            <Text
+              size="xl"
+              fw={700}
+              style={{
+                maxWidth: '100%',
+                textAlign: 'center',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+              }}
+            >
               {player.name}
             </Text>
-            <Title order={1} style={{ fontSize: '4rem', lineHeight: 1 }}>
-              {player.points}
-            </Title>
-            <Box style={{ display: 'flex', gap: '0.75rem' }}>
-              <Button
-                variant="light"
-                color="gray"
-                size="lg"
-                disabled={player.points === 0}
-                onClick={() => onPointChange(player.id, -1)}
-              >
-                -1
-              </Button>
-              <Button
-                size="lg"
-                color="teal"
-                disabled={!matchIsLive}
-                onClick={() => onPointChange(player.id, 1)}
-              >
-                +1
-              </Button>
-            </Box>
-            <Text size="sm" c={mutedText}>
-              {t.simpleScore.hint}
+            <AnimatedScore
+              value={player.points}
+              style={{ fontSize: 'clamp(4rem, 20vw, 8rem)', lineHeight: 1, fontWeight: 700 }}
+              reducedMotion={reducedMotion}
+            />
+            <Text size="sm" c={mutedText} ta="center">
+              {matchIsLive ? t.simpleScore.tapToScore : t.simpleScore.hint}
             </Text>
           </Stack>
         </Card>

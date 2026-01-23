@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback } from 'react'
  * Creates a rhythmic heartbeat sound using Web Audio API
  * The heartbeat has two beats (lub-dub) pattern
  */
-export const useHeartbeatSound = (isActive: boolean) => {
+export const useHeartbeatSound = (isActive: boolean, soundEnabled = true) => {
   const audioContextRef = useRef<AudioContext | null>(null)
   const gainNodeRef = useRef<GainNode | null>(null)
   const intervalRef = useRef<number | null>(null)
@@ -100,7 +100,7 @@ export const useHeartbeatSound = (isActive: boolean) => {
   }, [])
 
   useEffect(() => {
-    if (isActive) {
+    if (isActive && soundEnabled) {
       startHeartbeat()
     } else {
       stopHeartbeat()
@@ -109,7 +109,7 @@ export const useHeartbeatSound = (isActive: boolean) => {
     return () => {
       stopHeartbeat()
     }
-  }, [isActive, startHeartbeat, stopHeartbeat])
+  }, [isActive, soundEnabled, startHeartbeat, stopHeartbeat])
 
   // Cleanup on unmount
   useEffect(() => {

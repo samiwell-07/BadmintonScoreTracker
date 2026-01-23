@@ -13,9 +13,80 @@
   box-sizing: border-box;
 }
 
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   background-color: var(--mantine-color-body);
   color: var(--mantine-color-text);
+}
+
+/* Button press feedback animation */
+button, [role="button"] {
+  transition: transform 0.1s ease-out;
+}
+
+button:active:not(:disabled), [role="button"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  button:active:not(:disabled), [role="button"]:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--mantine-color-teal-6);
+  color: white;
+  padding: 8px 16px;
+  z-index: 10000;
+  border-radius: 0 0 8px 0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Tap to score card in simple view */
+.tap-to-score {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tap-to-score:hover {
+  transform: scale(1.01);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.tap-to-score:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-to-score:hover,
+  .tap-to-score:active {
+    transform: none;
+  }
 }

@@ -18,13 +18,30 @@ import { ScoreOnlyOverlays } from './components/ScoreOnlyOverlays'
 import { CoachScoreEntryCard } from './components/CoachScoreEntryCard'
 import { ProfilerWrapper } from './components/ProfilerWrapper'
 import { VictoryCelebration } from './components/VictoryCelebration'
+import { OnboardingTour, useOnboardingTour } from './components/OnboardingTour'
+import { DataManagementCard } from './components/DataManagementCard'
+import { AppSettingsCard, readAppSettings, saveAppSettings } from './components/AppSettingsCard'
+import {
+  SimpleScoreViewSkeleton,
+  MatchInsightsSkeleton,
+  GameHistorySkeleton,
+  MatchStatsSkeleton,
+  DoublesCourtSkeleton,
+} from './components/SkeletonLoaders'
 import { useMatchController } from './hooks/useMatchController'
 import { useThemeColors } from './hooks/useThemeColors'
 import { useLanguage } from './hooks/useLanguage'
 import { useHeartbeatSound } from './hooks/useHeartbeatSound'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useScoreAnnouncer } from './hooks/useScoreAnnouncer'
+import { useReducedMotion } from './hooks/useReducedMotion'
 import { perfMonitor } from './utils/performance'
 import type { MatchState, PlayerId } from './types/match'
 import type { MatchConfig } from './utils/match'
+
+// App version for display
+export const APP_VERSION = '1.0.0'
+
 const STORAGE_KEYS = {
   scoreOnly: 'scoreOnlyMode',
   simpleScore: 'simpleScoreMode',
@@ -87,6 +104,7 @@ function App() {
   const { match, history, gamesNeeded, matchIsLive, completedMatches, actions } =
     useMatchController(t)
   const { colorScheme, pageBg, cardBg, mutedText, toggleColorMode } = useThemeColors()
+  const prefersReducedMotion = useReducedMotion()
   const [scoreOnlyMode, setScoreOnlyMode] = useState(() =>
     readStoredBoolean(STORAGE_KEYS.scoreOnly),
   )
@@ -97,6 +115,35 @@ function App() {
   const [menuOpened, setMenuOpened] = useState(false)
   const [menuSection, setMenuSection] = useState<MenuSection>('score')
   const statsSectionRef = useRef<HTMLDivElement | null>(null)
+  
+  // Onboarding tour
+  const {
+    isOpen: isOnboardingOpen,
+    completeOnboarding,
+    skipOnboarding,
+    openOnboarding,
+  } = useOnboardingTour()
+
+  // App settings (sound/haptic)
+  const [soundEnabled, setSoundEnabled] = useState(() => readAppSettings().soundEffectsEnabled)
+  const [hapticEnabled, setHapticEnabled] = useState(() => readAppSettings().hapticFeedbackEnabled)
+
+  const handleSoundToggle = useCallback((enabled: boolean) => {
+    setSoundEnabled(enabled)
+    saveAppSettings({ soundEffectsEnabled: enabled })
+  }, [])
+
+  const handleHapticToggle = useCallback((enabled: boolean) => {
+    setHapticEnabled(enabled)
+    saveAppSettings({ hapticFeedbackEnabled: enabled })
+  }, [])
+
+  // Screen reader announcements for score changes
+  const { AnnouncerRegion } = useScoreAnnouncer({
+    players: match.players,
+    language,
+  })
+
   const {
     handleNameChange,
     handlePointChange,
@@ -118,6 +165,18 @@ function App() {
     handleToggleFavoritePlayer,
     pushUpdate,
   } = actions
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onPointChange: handlePointChange,
+    onUndo: handleUndo,
+    onToggleServer: handleServerToggle,
+    onSwapEnds: handleSwapEnds,
+    onToggleClock: handleClockToggle,
+    matchIsLive,
+    enabled: !menuOpened && !isOnboardingOpen,
+  })
+
   const [showVictoryCelebration, setShowVictoryCelebration] = useState(false)
   const [celebrationWinnerName, setCelebrationWinnerName] = useState('')
   const prevMatchWinnerRef = useRef<PlayerId | null>(null)
@@ -185,7 +244,7 @@ function App() {
   }, [match.players, match.raceTo, match.matchWinner])
 
   // Play heartbeat sound during critical points
-  useHeartbeatSound(isCriticalPoint)
+  useHeartbeatSound(isCriticalPoint, soundEnabled)
 
   const winningStreaks = useMemo(() => {
     const streaks: Record<PlayerId, number> = { playerA: 0, playerB: 0 }
@@ -240,7 +299,6 @@ function App() {
       streaks[streakPlayer] = streakCount
     }
     
-    console.log('Winning streaks:', streaks, 'History length:', history.length)
     return streaks
   }, [history, match.players])
 
@@ -403,11 +461,12 @@ function App() {
     return (
       <ProfilerWrapper id="App-SimpleScoreMode">
         {menuInterface}
+        <AnnouncerRegion />
         <Box
-          style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
+          style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.5rem', maxWidth: '100vw', overflow: 'hidden' }}
         >
-          <Container size="md" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
-            <Suspense fallback={<Stack gap="xs">{t.app.loadingScoreView}</Stack>}>
+          <Container size="md" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem', maxWidth: '100%' }}>
+            <Suspense fallback={<SimpleScoreViewSkeleton cardBg={cardBg} />}>
               <ProfilerWrapper id="SimpleScoreView">
                 <SimpleScoreView
                   players={match.players}
@@ -417,6 +476,7 @@ function App() {
                   onPointChange={handlePointChange}
                   onExit={() => setSimpleScoreMode(false)}
                   t={t}
+                  reducedMotion={prefersReducedMotion}
                 />
               </ProfilerWrapper>
             </Suspense>
@@ -429,8 +489,15 @@ function App() {
   return (
     <ProfilerWrapper id="App-FullMode">
       {menuInterface}
+      <AnnouncerRegion />
+      <OnboardingTour
+        isOpen={isOnboardingOpen}
+        onComplete={completeOnboarding}
+        onSkip={skipOnboarding}
+        t={t}
+      />
       {/* Heartbeat red pulse overlay for critical points */}
-      {isCriticalPoint && (
+      {isCriticalPoint && !prefersReducedMotion && (
         <>
           <style>
             {`
@@ -460,9 +527,9 @@ function App() {
         </>
       )}
       <Box
-        style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.75rem' }}
+        style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.5rem', maxWidth: '100vw', overflow: 'hidden' }}
       >
-        <Container size="lg" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
+        <Container size="lg" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem', maxWidth: '100%' }}>
           <Stack gap="lg">
             {!scoreOnlyMode && (
               <ProfilerWrapper id="MatchHeader">
@@ -513,7 +580,7 @@ function App() {
                   </ProfilerWrapper>
 
                   {match.doublesMode && (
-                    <Suspense fallback={<Stack gap="xs">{t.app.loadingDoublesDiagram}</Stack>}>
+                    <Suspense fallback={<DoublesCourtSkeleton cardBg={cardBg} />}>
                       <ProfilerWrapper id="DoublesCourtDiagram">
                         <DoublesCourtDiagram
                           players={match.players}
@@ -527,7 +594,7 @@ function App() {
                     </Suspense>
                   )}
 
-                  <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
+                  <Suspense fallback={<MatchInsightsSkeleton cardBg={cardBg} />}>
                     <ProfilerWrapper id="MatchInsightsCard-Main">
                       <MatchInsightsCard
                         cardBg={cardBg}
@@ -565,12 +632,27 @@ function App() {
                     onResetMatch={handleResetMatch}
                     t={t}
                   />
+                  <AppSettingsCard
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    soundEnabled={soundEnabled}
+                    hapticEnabled={hapticEnabled}
+                    onSoundToggle={handleSoundToggle}
+                    onHapticToggle={handleHapticToggle}
+                    onShowOnboarding={openOnboarding}
+                    t={t}
+                  />
+                  <DataManagementCard
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    t={t}
+                  />
                 </Stack>
               )}
 
             {menuSection === 'history' && (
                 <Stack gap="lg">
-                  <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
+                  <Suspense fallback={<GameHistorySkeleton cardBg={cardBg} />}>
                     <GameHistoryCard
                       cardBg={cardBg}
                       mutedText={mutedText}
@@ -581,7 +663,7 @@ function App() {
                     />
                   </Suspense>
                   <div ref={statsSectionRef}>
-                    <Suspense fallback={<Stack gap="xs">{t.app.loadingMatchDetails}</Stack>}>
+                    <Suspense fallback={<MatchStatsSkeleton cardBg={cardBg} />}>
                       <MatchStatsPanel
                         cardBg={cardBg}
                         mutedText={mutedText}

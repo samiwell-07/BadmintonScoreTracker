@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
-import { Badge, Button, Card, Group, Stack, Text, Title } from '@mantine/core'
+import { useCallback, useMemo, useState } from 'react'
+import { ActionIcon, Badge, Button, Card, Group, Stack, Text, Title, Tooltip } from '@mantine/core'
+import { IconShare } from '@tabler/icons-react'
+import { notifications } from '@mantine/notifications'
 import type { CompletedGame, PlayerId } from '../types/match'
 import { formatDuration, formatRelativeTime } from '../utils/match'
 import type { Translations } from '../i18n/translations'
@@ -22,6 +24,55 @@ export const GameHistoryCard = ({
   t,
 }: GameHistoryCardProps) => {
   const [collapsed, setCollapsed] = useState(false)
+
+  const handleShareGame = useCallback(async (game: CompletedGame) => {
+    const lineup: PlayerId[] = ['playerA', 'playerB']
+    const player1 = game.scores[lineup[0]]
+    const player2 = game.scores[lineup[1]]
+    
+    if (!player1 || !player2) return
+    
+    const date = new Date(game.timestamp).toLocaleDateString(undefined, {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    
+    const shareText = t.history.shareText(
+      player1.name,
+      player1.points,
+      player2.name,
+      player2.points,
+      formatDuration(game.durationMs),
+      date
+    )
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: shareText })
+      } else {
+        await navigator.clipboard.writeText(shareText)
+        notifications.show({
+          title: '✓',
+          message: t.history.shareCopied,
+          color: 'teal',
+        })
+      }
+    } catch (error) {
+      // User cancelled share or error occurred
+      if ((error as Error).name !== 'AbortError') {
+        notifications.show({
+          title: '✗',
+          message: t.history.shareError,
+          color: 'red',
+        })
+      }
+    }
+  }, [t])
+
   const summaryText = useMemo(() => {
     if (games.length === 0) {
       return t.history.summaryEmpty
@@ -84,9 +135,21 @@ export const GameHistoryCard = ({
                       <Text size="sm" fw={600}>
                         {t.history.gameLabel(displayNumber)}
                       </Text>
-                      <Text size="xs" c={mutedText}>
-                        {formatRelativeTime(game.timestamp, t.relativeTime)}
-                      </Text>
+                      <Group gap="xs">
+                        <Text size="xs" c={mutedText}>
+                          {formatRelativeTime(game.timestamp, t.relativeTime)}
+                        </Text>
+                        <Tooltip label={t.history.shareResult}>
+                          <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            size="sm"
+                            onClick={() => handleShareGame(game)}
+                          >
+                            <IconShare size={14} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
                     </Group>
                     <Group gap="xs" wrap="wrap">
                       <Badge color="teal" variant="light">

@@ -3,11 +3,16 @@ import ReactDOM from 'react-dom/client'
 import { MantineProvider, ColorSchemeScript } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import App from './App.tsx'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import './index.css'
 import { reportWebVitals } from './reportWebVitals'
 import { perfMonitor } from './utils/performance'
+import { generateStyledFavicon } from './utils/favicon'
+
+// Generate styled favicon with white circular background and fade
+generateStyledFavicon()
 
 declare global {
   interface Window {
@@ -15,7 +20,7 @@ declare global {
   }
 }
 
-// Log profiling instructions in dev
+// Log profiling instructions in dev only
 if (import.meta.env.DEV) {
   console.info(
     '%c🔍 Performance Profiling Available',
@@ -38,17 +43,19 @@ if (import.meta.env.DEV) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <MantineProvider defaultColorScheme="auto">
-      <ColorSchemeScript />
-      <Notifications position="top-right" autoClose={1800} />
-      <App />
-    </MantineProvider>
+    <ErrorBoundary>
+      <MantineProvider defaultColorScheme="auto">
+        <ColorSchemeScript />
+        <Notifications position="top-right" autoClose={1800} />
+        <App />
+      </MantineProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )
 
 reportWebVitals()
 
-// Expose perfMonitor globally for easy access
+// Expose perfMonitor globally for easy access in dev
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   window.perfMonitor = perfMonitor
 }
