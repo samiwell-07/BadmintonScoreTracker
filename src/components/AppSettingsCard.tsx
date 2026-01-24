@@ -9,11 +9,13 @@ const SETTINGS_STORAGE_KEY = 'bst-app-settings'
 interface AppSettings {
   soundEffectsEnabled: boolean
   hapticFeedbackEnabled: boolean
+  keepScreenOnEnabled: boolean
 }
 
 const defaultSettings: AppSettings = {
   soundEffectsEnabled: true,
   hapticFeedbackEnabled: true,
+  keepScreenOnEnabled: true,
 }
 
 export const readAppSettings = (): AppSettings => {
@@ -45,8 +47,10 @@ interface AppSettingsCardProps {
   mutedText: string
   soundEnabled: boolean
   hapticEnabled: boolean
+  keepScreenOn: boolean
   onSoundToggle: (enabled: boolean) => void
   onHapticToggle: (enabled: boolean) => void
+  onKeepScreenOnToggle: (enabled: boolean) => void
   onShowOnboarding: () => void
   t: Translations
 }
@@ -56,8 +60,10 @@ export const AppSettingsCard = ({
   mutedText,
   soundEnabled,
   hapticEnabled,
+  keepScreenOn,
   onSoundToggle,
   onHapticToggle,
+  onKeepScreenOnToggle,
   onShowOnboarding,
   t,
 }: AppSettingsCardProps) => {
@@ -65,6 +71,8 @@ export const AppSettingsCard = ({
   
   // Only show haptic on devices that support it
   const showHapticOption = isTouchDevice && 'vibrate' in navigator
+  // Wake Lock API support check
+  const showKeepScreenOn = 'wakeLock' in navigator
   
   return (
     <Card withBorder radius="lg" p="xl" style={{ backgroundColor: cardBg }}>
@@ -103,6 +111,24 @@ export const AppSettingsCard = ({
               <Switch
                 checked={hapticEnabled}
                 onChange={(e) => onHapticToggle(e.currentTarget.checked)}
+                color="teal"
+              />
+            </Group>
+          )}
+
+          {showKeepScreenOn && (
+            <Group justify="space-between">
+              <div>
+                <Text size="sm" fw={500}>
+                  {t.settings2?.keepScreenOn ?? 'Keep Screen On'}
+                </Text>
+                <Text size="xs" c={mutedText}>
+                  {t.settings2?.keepScreenOnDesc ?? 'Prevent screen from turning off during matches'}
+                </Text>
+              </div>
+              <Switch
+                checked={keepScreenOn}
+                onChange={(e) => onKeepScreenOnToggle(e.currentTarget.checked)}
                 color="teal"
               />
             </Group>

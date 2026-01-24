@@ -20,6 +20,7 @@ interface PlayerGridSectionProps {
   teammateServerMap: Record<PlayerId, string>
   winningStreaks: Record<PlayerId, number>
   favoritePlayerIds: PlayerId[]
+  isTabletLandscape?: boolean
   onNameChange: (playerId: PlayerId, name: string) => void
   onPointChange: (playerId: PlayerId, delta: number) => void
   onApplySavedName: (playerId: PlayerId, profile: PlayerProfile) => void
@@ -45,6 +46,7 @@ const PlayerGridSectionComponent = ({
   teammateServerMap,
   winningStreaks,
   favoritePlayerIds,
+  isTabletLandscape = false,
   onNameChange,
   onPointChange,
   onApplySavedName,
@@ -88,7 +90,10 @@ const PlayerGridSectionComponent = ({
         </Paper>
       )}
 
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+      <SimpleGrid 
+        cols={isTabletLandscape ? 2 : { base: 1, md: 2 }} 
+        spacing={isTabletLandscape ? 'md' : 'lg'}
+      >
         {players.map((player, index) => {
           const opponent = players[(index + 1) % players.length]
           const isServer = server === player.id

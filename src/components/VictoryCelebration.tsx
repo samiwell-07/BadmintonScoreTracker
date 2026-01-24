@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Box, Text, Title } from '@mantine/core'
+import { Box, Button, Group, Text, Title } from '@mantine/core'
+import { IconRefresh } from '@tabler/icons-react'
 import confetti from 'canvas-confetti'
 
 interface VictoryCelebrationProps {
   winnerName: string
   show: boolean
   onComplete: () => void
+  onRematch?: () => void
 }
 
 export const VictoryCelebration = ({
   winnerName,
   show,
   onComplete,
+  onRematch,
 }: VictoryCelebrationProps) => {
   const [visible, setVisible] = useState(false)
 
@@ -21,49 +24,69 @@ export const VictoryCelebration = ({
       return
     }
 
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    
     setVisible(true)
 
-    // Fire confetti from both sides
-    const duration = 4000
+    if (prefersReducedMotion) {
+      // Skip confetti animation for reduced motion
+      const hideTimer = setTimeout(() => {
+        setVisible(false)
+        onComplete()
+      }, 2000)
+      return () => clearTimeout(hideTimer)
+    }
+
+    // Fire confetti from both sides - optimized particle count
+    const duration = 3000
     const animationEnd = Date.now() + duration
     const colors = ['#ffd700', '#ff6b00', '#9932cc', '#00ff88', '#00bfff']
 
+    let frameCount = 0
     const frame = () => {
-      // Left side burst
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.6 },
-        colors,
-        zIndex: 10000,
-      })
-      
-      // Right side burst
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.6 },
-        colors,
-        zIndex: 10000,
-      })
+      frameCount++
+      // Only fire every 3rd frame to reduce load
+      if (frameCount % 3 === 0) {
+        // Left side burst
+        confetti({
+          particleCount: 2,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.6 },
+          colors,
+          zIndex: 10000,
+          disableForReducedMotion: true,
+        })
+        
+        // Right side burst
+        confetti({
+          particleCount: 2,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.6 },
+          colors,
+          zIndex: 10000,
+          disableForReducedMotion: true,
+        })
+      }
 
       if (Date.now() < animationEnd) {
         requestAnimationFrame(frame)
       }
     }
 
-    // Initial big burst from center
+    // Initial burst from center - reduced particles
     confetti({
-      particleCount: 100,
-      spread: 100,
+      particleCount: 50,
+      spread: 80,
       origin: { x: 0.5, y: 0.5 },
       colors,
       zIndex: 10000,
-      startVelocity: 45,
-      gravity: 0.8,
-      scalar: 1.2,
+      startVelocity: 35,
+      gravity: 1,
+      scalar: 1,
+      disableForReducedMotion: true,
     })
 
     frame()
@@ -72,7 +95,7 @@ export const VictoryCelebration = ({
     const hideTimer = setTimeout(() => {
       setVisible(false)
       onComplete()
-    }, duration + 1000)
+    }, duration + 500)
 
     return () => {
       clearTimeout(hideTimer)
@@ -158,6 +181,28 @@ export const VictoryCelebration = ({
       >
         Tap anywhere to dismiss
       </Text>
+      
+      {onRematch && (
+        <Group mt="xl" style={{ animation: 'slideUp 0.8s ease-out' }}>
+          <Button
+            variant="filled"
+            color="teal"
+            size="lg"
+            leftSection={<IconRefresh size={20} />}
+            onClick={(e) => {
+              e.stopPropagation()
+              onRematch()
+            }}
+            styles={{
+              root: {
+                boxShadow: '0 4px 20px rgba(0, 200, 150, 0.4)',
+              }
+            }}
+          >
+            Quick Rematch
+          </Button>
+        </Group>
+      )}
     </Box>
   )
 }

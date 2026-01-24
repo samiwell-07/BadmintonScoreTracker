@@ -113,6 +113,8 @@ const MatchDetailPanelsComponent = ({
           cardBg={cardBg}
           mutedText={mutedText}
           games={match.completedGames}
+          tags={match.tags}
+          notes={match.notes ?? []}
           onClearHistory={onClearHistory}
           onShowStats={() => setStatsMode(true)}
           t={t}

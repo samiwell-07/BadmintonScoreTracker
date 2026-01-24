@@ -90,3 +90,96 @@ button:active:not(:disabled), [role="button"]:active:not(:disabled) {
     transform: none;
   }
 }
+
+/* Score animations - GPU accelerated */
+.score-display {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.score-pop {
+  animation: scorePop 0.15s ease-out;
+}
+
+@keyframes scorePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Match point glow effect */
+.score-match-point {
+  animation: matchPointPulse 2s ease-in-out infinite;
+  text-shadow: 0 0 20px #ffd700, 0 0 40px #ffd700;
+}
+
+@keyframes matchPointPulse {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.6);
+  }
+}
+
+/* Streak glow effect */
+.score-streak {
+  animation: streakPulse 1s ease-in-out infinite;
+  text-shadow: 0 0 15px #ff4500, 0 0 30px #ff6b00;
+}
+
+@keyframes streakPulse {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(255, 69, 0, 0.6), 0 0 20px rgba(255, 107, 0, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(255, 69, 0, 0.9), 0 0 40px rgba(255, 107, 0, 0.6);
+  }
+}
+
+/* Combined streak + match point */
+.score-combined {
+  animation: combinedPulse 0.8s ease-in-out infinite;
+  text-shadow: 0 0 18px #9932cc, 0 0 36px #8a2be2;
+}
+
+@keyframes combinedPulse {
+  0%, 100% {
+    text-shadow: 0 0 12px rgba(148, 0, 211, 0.6), 0 0 24px rgba(138, 43, 226, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 22px rgba(148, 0, 211, 0.9), 0 0 44px rgba(138, 43, 226, 0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .score-pop,
+  .score-match-point,
+  .score-streak,
+  .score-combined {
+    animation: none !important;
+  }
+}
+/* Tablet Landscape Mode - Optimize layout for side-by-side display */
+@media screen and (orientation: landscape) and (min-width: 600px) and (max-width: 1200px) and (hover: none) and (pointer: coarse) {
+  /* Reduce padding for landscape tablet view */
+  .landscape-compact .mantine-Card-root {
+    padding: 12px !important;
+  }
+  
+  /* Larger score display in landscape for visibility */
+  .landscape-compact .score-display {
+    font-size: clamp(3rem, 10vw, 5rem) !important;
+  }
+  
+  /* Compact player name input */
+  .landscape-compact .mantine-TextInput-input {
+    font-size: 14px !important;
+    padding: 6px 10px !important;
+  }
+  
+  /* Reduce vertical spacing */
+  .landscape-compact .mantine-Stack-root {
+    gap: 8px !important;
+  }
+}

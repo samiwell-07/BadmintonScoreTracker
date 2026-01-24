@@ -9,9 +9,12 @@ import {
   Tooltip,
   type MantineColorScheme,
 } from '@mantine/core'
-import { IconArrowBackUp, IconMoon, IconSun } from '@tabler/icons-react'
+import { notifications } from '@mantine/notifications'
+import { IconArrowBackUp, IconMoon, IconShare, IconSun } from '@tabler/icons-react'
 import type { Translations } from '../i18n/translations'
 import logoImage from '../assets/logo.png'
+
+const APP_URL = 'https://srouji.github.io/BadmintonScoreTracker/'
 
 interface MatchHeaderProps {
   cardBg: string
@@ -27,6 +30,44 @@ interface MatchHeaderProps {
   language: 'en' | 'fr'
   onToggleLanguage: () => void
   t: Translations
+}
+
+const handleShareApp = async (t: Translations) => {
+  const shareData = {
+    title: 'Badminton Score Tracker',
+    text: 'Track badminton match scores easily!',
+    url: APP_URL,
+  }
+
+  try {
+    if (navigator.share && navigator.canShare?.(shareData)) {
+      await navigator.share(shareData)
+    } else {
+      await navigator.clipboard.writeText(APP_URL)
+      notifications.show({
+        title: t.header.shareApp,
+        message: t.header.shareAppCopied,
+        color: 'teal',
+      })
+    }
+  } catch (error) {
+    if ((error as Error).name !== 'AbortError') {
+      try {
+        await navigator.clipboard.writeText(APP_URL)
+        notifications.show({
+          title: t.header.shareApp,
+          message: t.header.shareAppCopied,
+          color: 'teal',
+        })
+      } catch {
+        notifications.show({
+          title: t.header.shareApp,
+          message: t.header.shareAppError,
+          color: 'red',
+        })
+      }
+    }
+  }
 }
 
 export const MatchHeader = ({
@@ -99,6 +140,16 @@ export const MatchHeader = ({
                 disabled={!canUndo}
               >
                 {t.header.undo}
+              </Button>
+            </Tooltip>
+            <Tooltip label={t.header.shareAppTooltip}>
+              <Button
+                variant="light"
+                color="teal"
+                leftSection={<IconShare size={18} />}
+                onClick={() => handleShareApp(t)}
+              >
+                {t.header.shareApp}
               </Button>
             </Tooltip>
           </Group>

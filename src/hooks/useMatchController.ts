@@ -18,7 +18,8 @@ import {
 } from '../types/match'
 import { clampPoints, didWinGame } from '../utils/match'
 import { showToast } from '../utils/notifications'
-import { vibrateGameWin, vibrateMatchWin } from '../utils/vibration'
+import { vibrateGameWin, vibrateMatchWin, vibratePoint, vibrateGamePoint, vibrateMatchPoint } from '../utils/vibration'
+import { playPointSound, playGamePointSound, playMatchPointSound, playGameWinSound, playMatchWinSound } from '../utils/sounds'
 import type { Translations } from '../i18n/translations'
 import { perfMonitor } from '../utils/performance'
 import { createFreshClockState, getLiveElapsedMs } from './matchController/clock'
@@ -185,11 +186,13 @@ export const useMatchController = (t: Translations) => {
           clockStartedAt = null
         }
 
-        // Vibrate on game/match win
+        // Vibrate and play sound on game/match win
         if (isMatchWin) {
           vibrateMatchWin()
+          playMatchWinSound()
         } else {
           vibrateGameWin()
+          playGameWinSound()
         }
 
         showToast({
@@ -223,6 +226,26 @@ export const useMatchController = (t: Translations) => {
           teammateServerMap: nextServerMap,
           pointHistory: isMatchWin ? [] : pointHistory, // Reset on match win
         }
+      }
+
+      // Regular point scored (no game/match won)
+      // Check if this point creates game point or match point situation
+      const currentScorer = players.find((player) => player.id === playerId)!
+      const currentOpponent = players.find((player) => player.id !== playerId)!
+      const wouldWinGame = didWinGame(currentScorer.points + 1, currentOpponent.points, state)
+      const isGamePointSituation = wouldWinGame
+      const isMatchPointSituation = isGamePointSituation && currentScorer.games === gamesNeeded - 1
+      
+      // Play sound and vibrate based on situation
+      if (isMatchPointSituation) {
+        vibrateMatchPoint()
+        playMatchPointSound()
+      } else if (isGamePointSituation) {
+        vibrateGamePoint()
+        playGamePointSound()
+      } else {
+        vibratePoint()
+        playPointSound()
       }
 
       return {
@@ -444,6 +467,30 @@ export const useMatchController = (t: Translations) => {
     }))
   }
 
+  const handleQuickRematch = () => {
+    perfMonitor.recordUserFlow({ type: 'quick-rematch', timestamp: performance.now() })
+    setHistory([]) // Clear history to reset streak tracking
+    pushUpdate((state) => ({
+      ...state,
+      players: state.players.map((player) => ({
+        ...player,
+        points: 0,
+        games: 0,
+        // Keep player names and teammates
+        teammates: player.teammates.map((mate) => ({ ...mate, points: 0, games: 0 })),
+      })),
+      matchWinner: null,
+      // Keep settings: raceTo, maxPoint, winByTwo, doublesMode
+      // Keep player names, favorites, tags
+      server: 'playerA',
+      teammateServerMap: createDefaultTeammateServerMap(),
+      pointHistory: [], // Reset point history
+      completedGames: [], // Reset game history
+      ...createFreshClockState(),
+    }))
+    showToast({ title: t.toasts?.rematchStarted ?? 'Rematch started!', status: 'success' })
+  }
+
   const handleClearHistory = () => {
     if (match.completedGames.length === 0) {
       showToast({ title: t.toasts.nothingToErase, status: 'info' })
@@ -550,6 +597,49 @@ export const useMatchController = (t: Translations) => {
         }
       }),
     }))
+  }
+
+  const handleApplyTemplate = (template: {
+    raceTo: number
+    bestOf: number
+    winByTwo: boolean
+    doublesMode: boolean
+    tags: MatchTag[]
+    playerAName?: string
+    playerBName?: string
+  }) => {
+    perfMonitor.recordUserFlow({
+      type: 'apply-template',
+      timestamp: performance.now(),
+    })
+    setHistory([]) // Clear history when applying template
+    pushUpdate((state) => ({
+      ...state,
+      raceTo: template.raceTo,
+      maxPoint: template.raceTo + 9, // Standard max is raceTo + 9
+      bestOf: template.bestOf as 1 | 3 | 5,
+      winByTwo: template.winByTwo,
+      doublesMode: template.doublesMode,
+      tags: template.tags,
+      players: state.players.map((player) => ({
+        ...player,
+        name:
+          player.id === 'playerA' && template.playerAName
+            ? template.playerAName
+            : player.id === 'playerB' && template.playerBName
+              ? template.playerBName
+              : player.name,
+        points: 0,
+        games: 0,
+        teammates: player.teammates.map((mate) => ({ ...mate })),
+      })),
+      matchWinner: null,
+      server: 'playerA',
+      teammateServerMap: createDefaultTeammateServerMap(),
+      pointHistory: [],
+      ...createFreshClockState(),
+    }))
+    showToast({ title: t.templates?.applied ?? 'Template applied!', status: 'success' })
   }
 
   const handleDoublesModeToggle = (enabled: boolean) => {
@@ -762,6 +852,8 @@ export const useMatchController = (t: Translations) => {
       handleDeleteNote,
       handleUndoToIndex,
       handleSetStartingPoints,
+      handleQuickRematch,
+      handleApplyTemplate,
       pushUpdate,
     },
   }

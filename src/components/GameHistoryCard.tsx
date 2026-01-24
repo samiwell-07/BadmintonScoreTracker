@@ -1,15 +1,47 @@
 import { useCallback, useMemo, useState } from 'react'
-import { ActionIcon, Badge, Button, Card, Group, Stack, Text, Title, Tooltip } from '@mantine/core'
-import { IconShare } from '@tabler/icons-react'
+import { ActionIcon, Badge, Button, Card, Chip, Group, Stack, Text, Title, Tooltip } from '@mantine/core'
+import { IconShare, IconNote } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
-import type { CompletedGame, PlayerId } from '../types/match'
+import type { CompletedGame, PlayerId, MatchTag, MatchNote } from '../types/match'
 import { formatDuration, formatRelativeTime } from '../utils/match'
 import type { Translations } from '../i18n/translations'
+
+const getTagColor = (tag: MatchTag): string => {
+  switch (tag) {
+    case 'training':
+      return 'cyan'
+    case 'league':
+      return 'red'
+    case 'friendly':
+      return 'green'
+    case 'tournament':
+      return 'yellow'
+    default:
+      return 'gray'
+  }
+}
+
+const getTagLabel = (tag: MatchTag, t: Translations): string => {
+  switch (tag) {
+    case 'training':
+      return t.matchTags?.training ?? 'Training'
+    case 'league':
+      return t.matchTags?.league ?? 'League'
+    case 'friendly':
+      return t.matchTags?.friendly ?? 'Friendly'
+    case 'tournament':
+      return t.matchTags?.tournament ?? 'Tournament'
+    default:
+      return tag
+  }
+}
 
 interface GameHistoryCardProps {
   cardBg: string
   mutedText: string
   games: CompletedGame[]
+  tags: MatchTag[]
+  notes: MatchNote[]
   onClearHistory: () => void
   onShowStats: () => void
   t: Translations
@@ -19,6 +51,8 @@ export const GameHistoryCard = ({
   cardBg,
   mutedText,
   games,
+  tags,
+  notes,
   onClearHistory,
   onShowStats,
   t,
@@ -155,6 +189,18 @@ export const GameHistoryCard = ({
                       <Badge color="teal" variant="light">
                         {t.history.winnerBadge(game.winnerName)}
                       </Badge>
+                      {tags && tags.length > 0 && tags.map((tag) => (
+                        <Chip
+                          key={tag}
+                          checked={false}
+                          color={getTagColor(tag)}
+                          variant="light"
+                          size="xs"
+                          styles={{ label: { cursor: 'default' } }}
+                        >
+                          {getTagLabel(tag, t)}
+                        </Chip>
+                      ))}
                       <Badge color="gray" variant="light">
                         {formatDuration(game.durationMs)}
                       </Badge>
@@ -171,6 +217,19 @@ export const GameHistoryCard = ({
                         )
                       })}
                     </Group>
+                    {/* Notes for this game */}
+                    {notes && notes.filter(n => n.gameNumber === displayNumber).length > 0 && (
+                      <Stack gap={4} mt="xs">
+                        {notes.filter(n => n.gameNumber === displayNumber).map((note) => (
+                          <Group key={note.id} gap="xs" align="flex-start">
+                            <IconNote size={14} style={{ color: 'var(--mantine-color-yellow-6)', flexShrink: 0, marginTop: 2 }} />
+                            <Text size="xs" c={mutedText} style={{ flex: 1 }}>
+                              {note.text}
+                            </Text>
+                          </Group>
+                        ))}
+                      </Stack>
+                    )}
                   </Stack>
                 </Card>
               )

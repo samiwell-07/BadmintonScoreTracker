@@ -27,6 +27,33 @@ export const isVibrationSupported = (): boolean => {
 }
 
 /**
+ * Trigger a light vibration for regular point scored
+ * Pattern: quick 30ms pulse
+ */
+export const vibratePoint = (): void => {
+  if (!isVibrationSupported() || !isHapticEnabled()) return
+  navigator.vibrate(30)
+}
+
+/**
+ * Trigger a medium vibration for game point
+ * Pattern: double pulse 50ms, pause 50ms, 50ms
+ */
+export const vibrateGamePoint = (): void => {
+  if (!isVibrationSupported() || !isHapticEnabled()) return
+  navigator.vibrate([50, 50, 50])
+}
+
+/**
+ * Trigger a stronger vibration for match point
+ * Pattern: triple pulse
+ */
+export const vibrateMatchPoint = (): void => {
+  if (!isVibrationSupported() || !isHapticEnabled()) return
+  navigator.vibrate([60, 40, 60, 40, 80])
+}
+
+/**
  * Trigger a powerful double-pulse vibration for game/set wins
  * Pattern: vibrate 200ms, pause 100ms, vibrate 400ms
  */

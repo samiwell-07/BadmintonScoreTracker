@@ -8,6 +8,8 @@ export interface DeviceInfo {
   isTouchDevice: boolean
   screenSize: 'small' | 'medium' | 'large'
   isPWA: boolean
+  isLandscape: boolean
+  isTabletLandscape: boolean
 }
 
 const getDeviceInfo = (): DeviceInfo => {
@@ -20,6 +22,8 @@ const getDeviceInfo = (): DeviceInfo => {
       isTouchDevice: false,
       screenSize: 'large',
       isPWA: false,
+      isLandscape: false,
+      isTabletLandscape: false,
     }
   }
 
@@ -35,6 +39,7 @@ const getDeviceInfo = (): DeviceInfo => {
   
   // Screen size
   const width = window.innerWidth
+  const height = window.innerHeight
   const screenSize: 'small' | 'medium' | 'large' = 
     width < 576 ? 'small' : 
     width < 992 ? 'medium' : 
@@ -48,6 +53,13 @@ const getDeviceInfo = (): DeviceInfo => {
     // @ts-expect-error - iOS Safari specific
     window.navigator.standalone === true
 
+  // Landscape detection
+  const isLandscape = width > height
+  
+  // Tablet landscape: touch device in landscape with reasonable width (600-1200px)
+  // This targets tablets rotated horizontally, not phones or desktops
+  const isTabletLandscape = isTouchDevice && isLandscape && width >= 600 && width <= 1200
+
   return {
     isMobile,
     isDesktop: !isMobile,
@@ -56,6 +68,8 @@ const getDeviceInfo = (): DeviceInfo => {
     isTouchDevice,
     screenSize,
     isPWA,
+    isLandscape,
+    isTabletLandscape,
   }
 }
 

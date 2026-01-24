@@ -1,7 +1,37 @@
-import { Badge, Button, Card, Divider, Group, Stack, Text, Title } from '@mantine/core'
-import type { MatchState } from '../types/match'
+import { Badge, Button, Card, Chip, Divider, Group, Stack, Text, Title } from '@mantine/core'
+import type { MatchState, MatchTag } from '../types/match'
 import { formatDuration, formatRelativeTime } from '../utils/match'
 import type { Translations } from '../i18n/translations'
+
+const getTagColor = (tag: MatchTag): string => {
+  switch (tag) {
+    case 'training':
+      return 'cyan'
+    case 'league':
+      return 'red'
+    case 'friendly':
+      return 'green'
+    case 'tournament':
+      return 'yellow'
+    default:
+      return 'gray'
+  }
+}
+
+const getTagLabel = (tag: MatchTag, t: Translations): string => {
+  switch (tag) {
+    case 'training':
+      return t.matchTags?.training ?? 'Training'
+    case 'league':
+      return t.matchTags?.league ?? 'League'
+    case 'friendly':
+      return t.matchTags?.friendly ?? 'Friendly'
+    case 'tournament':
+      return t.matchTags?.tournament ?? 'Tournament'
+    default:
+      return tag
+  }
+}
 
 interface MatchInsightsCardProps {
   cardBg: string
@@ -44,6 +74,18 @@ export const MatchInsightsCard = ({
         <Badge color={matchIsLive ? 'green' : 'grape'} variant="light">
           {matchIsLive ? t.insights.live : t.insights.completed}
         </Badge>
+        {match.tags && match.tags.length > 0 && match.tags.map((tag) => (
+          <Chip
+            key={tag}
+            checked={false}
+            color={getTagColor(tag)}
+            variant="light"
+            size="xs"
+            styles={{ label: { cursor: 'default' } }}
+          >
+            {getTagLabel(tag, t)}
+          </Chip>
+        ))}
         <Badge color="cyan" variant="light">
           {t.insights.bestOfBadge(match.bestOf)}
         </Badge>

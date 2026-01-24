@@ -29,6 +29,7 @@ import { VictoryCelebration } from './components/VictoryCelebration'
 import { OnboardingTour, useOnboardingTour } from './components/OnboardingTour'
 import { DataManagementCard } from './components/DataManagementCard'
 import { AppSettingsCard, readAppSettings, saveAppSettings } from './components/AppSettingsCard'
+import { MatchTemplatesCard, type MatchTemplate } from './components/MatchTemplatesCard'
 import {
   SimpleScoreViewSkeleton,
   MatchInsightsSkeleton,
@@ -43,6 +44,8 @@ import { useHeartbeatSound } from './hooks/useHeartbeatSound'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useScoreAnnouncer } from './hooks/useScoreAnnouncer'
 import { useReducedMotion } from './hooks/useReducedMotion'
+import { useWakeLock } from './hooks/useWakeLock'
+import { useDeviceDetect } from './hooks/useDeviceDetect'
 import { perfMonitor } from './utils/performance'
 import type { MatchState, PlayerId } from './types/match'
 import type { MatchConfig } from './utils/match'
@@ -113,6 +116,7 @@ function App() {
     useMatchController(t)
   const { colorScheme, pageBg, cardBg, mutedText, toggleColorMode } = useThemeColors()
   const prefersReducedMotion = useReducedMotion()
+  const { isTabletLandscape } = useDeviceDetect()
   const [scoreOnlyMode, setScoreOnlyMode] = useState(() =>
     readStoredBoolean(STORAGE_KEYS.scoreOnly),
   )
@@ -133,9 +137,10 @@ function App() {
     openOnboarding,
   } = useOnboardingTour()
 
-  // App settings (sound/haptic)
+  // App settings (sound/haptic/wake lock)
   const [soundEnabled, setSoundEnabled] = useState(() => readAppSettings().soundEffectsEnabled)
   const [hapticEnabled, setHapticEnabled] = useState(() => readAppSettings().hapticFeedbackEnabled)
+  const [keepScreenOn, setKeepScreenOn] = useState(() => readAppSettings().keepScreenOnEnabled ?? true)
 
   const handleSoundToggle = useCallback((enabled: boolean) => {
     setSoundEnabled(enabled)
@@ -146,6 +151,14 @@ function App() {
     setHapticEnabled(enabled)
     saveAppSettings({ hapticFeedbackEnabled: enabled })
   }, [])
+
+  const handleKeepScreenOnToggle = useCallback((enabled: boolean) => {
+    setKeepScreenOn(enabled)
+    saveAppSettings({ keepScreenOnEnabled: enabled })
+  }, [])
+
+  // Keep screen on during active matches
+  useWakeLock(keepScreenOn && matchIsLive)
 
   // Screen reader announcements for score changes
   const { AnnouncerRegion } = useScoreAnnouncer({
@@ -177,6 +190,8 @@ function App() {
     handleDeleteNote,
     handleUndoToIndex,
     handleSetStartingPoints,
+    handleQuickRematch,
+    handleApplyTemplate,
     pushUpdate,
   } = actions
 
@@ -217,6 +232,15 @@ function App() {
   const handleCelebrationComplete = useCallback(() => {
     setShowVictoryCelebration(false)
   }, [])
+
+  const handleRematch = useCallback(() => {
+    setShowVictoryCelebration(false)
+    handleQuickRematch()
+  }, [handleQuickRematch])
+
+  const handleTemplateApply = useCallback((template: MatchTemplate) => {
+    handleApplyTemplate(template.config)
+  }, [handleApplyTemplate])
 
   const toggleMenu = useCallback(() => {
     setMenuOpened((previous) => !previous)
@@ -541,9 +565,10 @@ function App() {
         </>
       )}
       <Box
+        className={isTabletLandscape ? 'landscape-compact' : ''}
         style={{ minHeight: '100vh', backgroundColor: pageBg, paddingInline: '0.5rem', maxWidth: '100vw', overflow: 'hidden' }}
       >
-        <Container size="lg" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem', maxWidth: '100%' }}>
+        <Container size="lg" style={{ paddingTop: isTabletLandscape ? '1rem' : '2.5rem', paddingBottom: isTabletLandscape ? '1.5rem' : '3.5rem', maxWidth: '100%' }}>
           <Stack gap="lg">
             {!scoreOnlyMode && (
               <ProfilerWrapper id="MatchHeader">
@@ -582,6 +607,7 @@ function App() {
                       teammateServerMap={match.teammateServerMap}
                       winningStreaks={winningStreaks}
                       favoritePlayerIds={match.favoritePlayerIds ?? []}
+                      isTabletLandscape={isTabletLandscape}
                       onNameChange={handleNameChange}
                       onPointChange={handlePointChange}
                       onApplySavedName={handleApplySavedName}
@@ -696,6 +722,21 @@ function App() {
                     mutedText={mutedText}
                     t={t}
                   />
+                  <MatchTemplatesCard
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    currentConfig={{
+                      raceTo: match.raceTo,
+                      bestOf: match.bestOf,
+                      winByTwo: match.winByTwo,
+                      doublesMode: match.doublesMode,
+                      tags: match.tags ?? [],
+                      playerAName: match.players.find((p) => p.id === 'playerA')?.name ?? '',
+                      playerBName: match.players.find((p) => p.id === 'playerB')?.name ?? '',
+                    }}
+                    onApplyTemplate={handleTemplateApply}
+                    t={t}
+                  />
                   <MatchControlsCard
                     cardBg={cardBg}
                     onSwapEnds={handleSwapEnds}
@@ -709,8 +750,10 @@ function App() {
                     mutedText={mutedText}
                     soundEnabled={soundEnabled}
                     hapticEnabled={hapticEnabled}
+                    keepScreenOn={keepScreenOn}
                     onSoundToggle={handleSoundToggle}
                     onHapticToggle={handleHapticToggle}
+                    onKeepScreenOnToggle={handleKeepScreenOnToggle}
                     onShowOnboarding={openOnboarding}
                     t={t}
                   />
@@ -729,6 +772,8 @@ function App() {
                       cardBg={cardBg}
                       mutedText={mutedText}
                       games={match.completedGames}
+                      tags={match.tags}
+                      notes={match.notes ?? []}
                       onClearHistory={handleClearHistory}
                       onShowStats={scrollStatsIntoView}
                       t={t}
@@ -789,6 +834,7 @@ function App() {
         show={showVictoryCelebration}
         winnerName={celebrationWinnerName}
         onComplete={handleCelebrationComplete}
+        onRematch={handleRematch}
       />
     </ProfilerWrapper>
   )

@@ -44,6 +44,10 @@ export interface Translations {
     colorSchemeTooltip: string
     colorSchemeAriaLabel: string
     languageTooltip: string
+    shareApp: string
+    shareAppTooltip: string
+    shareAppCopied: string
+    shareAppError: string
   }
   controls: {
     resetPoints: string
@@ -183,6 +187,7 @@ export interface Translations {
     savedName: (name: string) => string
     gameWin: (name: string) => string
     matchWin: (name: string) => string
+    rematchStarted?: string
   }
   relativeTime: RelativeTimeTranslations
   doublesDiagram: {
@@ -258,6 +263,8 @@ export interface Translations {
     soundEffectsDesc: string
     hapticFeedback: string
     hapticFeedbackDesc: string
+    keepScreenOn: string
+    keepScreenOnDesc: string
     showKeyboardShortcuts: string
     appVersion: string
   }
@@ -341,6 +348,18 @@ export interface Translations {
     declining: string
     stable: string
   }
+  templates?: {
+    title: string
+    hint: string
+    save: string
+    saveTitle: string
+    saveDesc: string
+    saveCurrentTooltip: string
+    nameLabel: string
+    namePlaceholder: string
+    empty: string
+    applied: string
+  }
 }
 
 const enCourtLabels: Record<CourtSide, string> = {
@@ -392,6 +411,10 @@ export const translations: Record<Language, Translations> = {
       colorSchemeTooltip: 'Swap light / dark mode',
       colorSchemeAriaLabel: 'Toggle color scheme',
       languageTooltip: 'Show in French',
+      shareApp: 'Share App',
+      shareAppTooltip: 'Share this app with friends',
+      shareAppCopied: 'App link copied!',
+      shareAppError: 'Could not share app',
     },
     controls: {
       resetPoints: 'Reset points',
@@ -546,6 +569,7 @@ export const translations: Record<Language, Translations> = {
       savedName: (name) => `Saved ${name}`,
       gameWin: (name) => `${name} wins the game`,
       matchWin: (name) => `${name} wins the match`,
+      rematchStarted: 'Rematch started!',
     },
     relativeTime: {
       justNow: 'just now',
@@ -628,6 +652,8 @@ export const translations: Record<Language, Translations> = {
       soundEffectsDesc: 'Play heartbeat sound during critical points',
       hapticFeedback: 'Haptic Feedback',
       hapticFeedbackDesc: 'Vibrate on game and match wins',
+      keepScreenOn: 'Keep Screen On',
+      keepScreenOnDesc: 'Prevent screen from turning off during matches',
       showKeyboardShortcuts: 'Show Keyboard Shortcuts',
       appVersion: 'App Version',
     },
@@ -711,6 +737,18 @@ export const translations: Record<Language, Translations> = {
       declining: 'Declining',
       stable: 'Stable',
     },
+    templates: {
+      title: 'Match Templates',
+      hint: 'Save and quickly apply your favorite match configurations',
+      save: 'Save',
+      saveTitle: 'Save Template',
+      saveDesc: 'This will save your current match settings (points, best of, win by two, doubles mode, tags, and player names).',
+      saveCurrentTooltip: 'Save current settings as template',
+      nameLabel: 'Template Name',
+      namePlaceholder: 'e.g., League Match, Practice Session',
+      empty: 'No templates saved yet. Save your current settings to create a template.',
+      applied: 'Template applied!',
+    },
   },
   fr: {
     common: {
@@ -750,6 +788,10 @@ export const translations: Record<Language, Translations> = {
       colorSchemeTooltip: 'Basculer clair / sombre',
       colorSchemeAriaLabel: 'Changer le thème',
       languageTooltip: 'Afficher en anglais',
+      shareApp: 'Partager',
+      shareAppTooltip: 'Partager cette app avec vos amis',
+      shareAppCopied: 'Lien copié!',
+      shareAppError: 'Impossible de partager',
     },
     controls: {
       resetPoints: 'Réinitialiser les points',
@@ -902,6 +944,7 @@ export const translations: Record<Language, Translations> = {
       savedName: (name) => `${name} enregistré`,
       gameWin: (name) => `${name} remporte le jeu`,
       matchWin: (name) => `${name} remporte le match`,
+      rematchStarted: 'Revanche commencée !',
     },
     relativeTime: {
       justNow: 'à l’instant',
@@ -985,6 +1028,8 @@ export const translations: Record<Language, Translations> = {
       soundEffectsDesc: 'Jouer le battement de cœur pendant les points critiques',
       hapticFeedback: 'Retour haptique',
       hapticFeedbackDesc: 'Vibrer lors des victoires de jeu et de match',
+      keepScreenOn: 'Garder l\'écran allumé',
+      keepScreenOnDesc: 'Empêcher l\'écran de s\'éteindre pendant les matchs',
       showKeyboardShortcuts: 'Afficher les raccourcis clavier',
       appVersion: 'Version de l\'app',
     },
@@ -1067,6 +1112,18 @@ export const translations: Record<Language, Translations> = {
       improving: 'En progression',
       declining: 'En déclin',
       stable: 'Stable',
+    },
+    templates: {
+      title: 'Modèles de match',
+      hint: 'Enregistrez et appliquez rapidement vos configurations préférées',
+      save: 'Enregistrer',
+      saveTitle: 'Enregistrer le modèle',
+      saveDesc: 'Cela enregistrera vos paramètres actuels (points, meilleur de, victoire par 2, mode double, tags et noms des joueurs).',
+      saveCurrentTooltip: 'Enregistrer les paramètres actuels comme modèle',
+      nameLabel: 'Nom du modèle',
+      namePlaceholder: 'ex: Match de ligue, Séance d\'entraînement',
+      empty: 'Aucun modèle enregistré. Enregistrez vos paramètres actuels pour créer un modèle.',
+      applied: 'Modèle appliqué !',
     },
   },
 }
