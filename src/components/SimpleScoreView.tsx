@@ -1,4 +1,4 @@
-import { Box, Button, Card, SimpleGrid, Stack, Text } from '@mantine/core'
+import { Button, Card, SimpleGrid, Stack, Text } from '@mantine/core'
 import type { PlayerId, PlayerState } from '../types/match'
 import type { Translations } from '../i18n/translations'
 import { AnimatedScore } from './AnimatedScore'

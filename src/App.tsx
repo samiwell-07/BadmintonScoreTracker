@@ -14,6 +14,14 @@ import { MatchHeader } from './components/MatchHeader'
 import { PlayerGridSection } from './components/PlayerGridSection'
 import { MatchSettingsCard } from './components/MatchSettingsCard'
 import { MatchControlsCard } from './components/MatchControlsCard'
+import { MomentumChart } from './components/MomentumChart'
+import { HeadToHeadCard } from './components/HeadToHeadCard'
+import { MatchTagsCard } from './components/MatchTagsCard'
+import { MatchNotesCard } from './components/MatchNotesCard'
+import { UndoHistoryCard } from './components/UndoHistoryCard'
+import { MatchExportCard } from './components/MatchExportCard'
+import { CustomGameModeCard } from './components/CustomGameModeCard'
+import { PerformanceTrendsCard } from './components/PerformanceTrendsCard'
 import { ScoreOnlyOverlays } from './components/ScoreOnlyOverlays'
 import { CoachScoreEntryCard } from './components/CoachScoreEntryCard'
 import { ProfilerWrapper } from './components/ProfilerWrapper'
@@ -115,6 +123,7 @@ function App() {
   const [menuOpened, setMenuOpened] = useState(false)
   const [menuSection, setMenuSection] = useState<MenuSection>('score')
   const statsSectionRef = useRef<HTMLDivElement | null>(null)
+  const exportTargetRef = useRef<HTMLDivElement | null>(null)
   
   // Onboarding tour
   const {
@@ -163,6 +172,11 @@ function App() {
     handleSwapTeammates,
     handleClearHistory,
     handleToggleFavoritePlayer,
+    handleToggleTag,
+    handleAddNote,
+    handleDeleteNote,
+    handleUndoToIndex,
+    handleSetStartingPoints,
     pushUpdate,
   } = actions
 
@@ -552,18 +566,19 @@ function App() {
             )}
             {menuSection === 'score' && (
                 <Stack gap="lg">
-                  <ProfilerWrapper id="PlayerGridSection">
-                    <PlayerGridSection
-                      players={match.players}
-                      cardBg={cardBg}
-                      mutedText={mutedText}
-                      server={match.server}
-                      matchWinner={match.matchWinner}
-                      gamesNeeded={gamesNeeded}
-                      matchConfig={matchConfig}
-                      matchIsLive={matchIsLive}
-                      savedNames={match.savedNames}
-                      doublesMode={match.doublesMode}
+                  <div ref={exportTargetRef}>
+                    <ProfilerWrapper id="PlayerGridSection">
+                      <PlayerGridSection
+                        players={match.players}
+                        cardBg={cardBg}
+                        mutedText={mutedText}
+                        server={match.server}
+                        matchWinner={match.matchWinner}
+                        gamesNeeded={gamesNeeded}
+                        matchConfig={matchConfig}
+                        matchIsLive={matchIsLive}
+                        savedNames={match.savedNames}
+                        doublesMode={match.doublesMode}
                       teammateServerMap={match.teammateServerMap}
                       winningStreaks={winningStreaks}
                       favoritePlayerIds={match.favoritePlayerIds ?? []}
@@ -577,7 +592,8 @@ function App() {
                       onToggleFavorite={handleToggleFavoritePlayer}
                       t={t}
                     />
-                  </ProfilerWrapper>
+                    </ProfilerWrapper>
+                  </div>
 
                   {match.doublesMode && (
                     <Suspense fallback={<DoublesCourtSkeleton cardBg={cardBg} />}>
@@ -609,6 +625,55 @@ function App() {
                       />
                     </ProfilerWrapper>
                   </Suspense>
+
+                  <MomentumChart
+                    pointHistory={match.pointHistory ?? []}
+                    playerAName={match.players[0]?.name ?? 'Player A'}
+                    playerBName={match.players[1]?.name ?? 'Player B'}
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    t={t}
+                  />
+
+                  <HeadToHeadCard
+                    playerAName={match.players[0]?.name ?? 'Player A'}
+                    playerBName={match.players[1]?.name ?? 'Player B'}
+                    completedMatches={completedMatches}
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    t={t}
+                  />
+
+                  <PerformanceTrendsCard
+                    completedMatches={completedMatches}
+                    currentPlayerIds={{
+                      playerA: match.players[0]?.name ?? 'Player A',
+                      playerB: match.players[1]?.name ?? 'Player B',
+                    }}
+                    cardBg={cardBg}
+                    t={t}
+                  />
+
+                  <MatchNotesCard
+                    notes={match.notes ?? []}
+                    onAddNote={handleAddNote}
+                    onDeleteNote={handleDeleteNote}
+                    t={t}
+                  />
+
+                  <UndoHistoryCard
+                    history={history}
+                    currentMatch={match}
+                    onUndoToIndex={handleUndoToIndex}
+                    cardBg={cardBg}
+                    t={t}
+                  />
+
+                  <MatchExportCard
+                    exportTargetRef={exportTargetRef}
+                    cardBg={cardBg}
+                    t={t}
+                  />
                 </Stack>
               )}
 
@@ -622,6 +687,13 @@ function App() {
                     onBestOfChange={handleBestOfChange}
                     onWinByTwoToggle={handleWinByTwoToggle}
                     onDoublesToggle={handleDoublesModeToggle}
+                    t={t}
+                  />
+                  <MatchTagsCard
+                    selectedTags={match.tags ?? []}
+                    onToggleTag={handleToggleTag}
+                    cardBg={cardBg}
+                    mutedText={mutedText}
                     t={t}
                   />
                   <MatchControlsCard
@@ -687,6 +759,12 @@ function App() {
                     onNameChange={handleNameChange}
                     onSaveName={handleSavePlayerName}
                     onApplySavedName={handleApplySavedName}
+                    t={t}
+                  />
+                  <CustomGameModeCard
+                    match={match}
+                    onSetStartingPoints={handleSetStartingPoints}
+                    cardBg={cardBg}
                     t={t}
                   />
                 </Stack>

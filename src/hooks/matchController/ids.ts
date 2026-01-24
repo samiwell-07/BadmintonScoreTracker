@@ -8,3 +8,7 @@ export const createGameId = () => randomId()
 export const createMatchId = () => randomId()
 
 export const createProfileId = () => randomId()
+
+export const createPointId = () => randomId()
+
+export const createNoteId = () => randomId()

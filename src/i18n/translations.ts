@@ -261,6 +261,86 @@ export interface Translations {
     showKeyboardShortcuts: string
     appVersion: string
   }
+  momentum?: {
+    title: string
+    notEnoughData: string
+    ralliesLabel: string
+    leadChanges: string
+    biggestLead: string
+    longestStreak: string
+  }
+  headToHead?: {
+    title: string
+    noMatches: string
+    record: string
+    wins: string
+    lastPlayed: string
+    avgMargin: string
+    recentForm: string
+  }
+  matchTags?: {
+    title: string
+    hint: string
+    training: string
+    league: string
+    friendly: string
+    tournament: string
+  }
+  matchNotes?: {
+    title: string
+    note: string
+    notes: string
+    placeholder: string
+    ctrlEnterHint: string
+    addNote: string
+    deleteNote: string
+    game: string
+    empty: string
+  }
+  undoHistory?: {
+    title: string
+    empty: string
+    undoTo: string
+    currentState: string
+    point: string
+    game: string
+    action: string
+    actionsAgo: (count: number) => string
+  }
+  export?: {
+    title: string
+    hint: string
+    exportPng: string
+    exporting: string
+    success: string
+    error: string
+    filename: string
+  }
+  customGame?: {
+    title: string
+    hint: string
+    targetScore: string
+    targetScoreHint: string
+    handicap: string
+    handicapHint: string
+    presets: string
+    applyHandicap: string
+    clearHandicap: string
+    startingPoints: string
+  }
+  trends?: {
+    title: string
+    noData: string
+    minMatches: (count: number) => string
+    winRate: string
+    avgScore: string
+    avgDuration: string
+    recentMatches: string
+    performance: string
+    improving: string
+    declining: string
+    stable: string
+  }
 }
 
 const enCourtLabels: Record<CourtSide, string> = {
@@ -551,6 +631,86 @@ export const translations: Record<Language, Translations> = {
       showKeyboardShortcuts: 'Show Keyboard Shortcuts',
       appVersion: 'App Version',
     },
+    momentum: {
+      title: 'Momentum',
+      notEnoughData: 'Score some points to see the momentum chart',
+      ralliesLabel: 'Rallies',
+      leadChanges: 'Lead Changes',
+      biggestLead: 'Biggest Lead',
+      longestStreak: 'Longest Streak',
+    },
+    headToHead: {
+      title: 'Head-to-Head',
+      noMatches: 'No previous matches between these players',
+      record: 'Record',
+      wins: 'Wins',
+      lastPlayed: 'Last Played',
+      avgMargin: 'Avg. Margin',
+      recentForm: 'Recent Form',
+    },
+    matchTags: {
+      title: 'Match Type',
+      hint: 'Tag this match',
+      training: 'Training',
+      league: 'League',
+      friendly: 'Friendly',
+      tournament: 'Tournament',
+    },
+    matchNotes: {
+      title: 'Match Notes',
+      note: 'note',
+      notes: 'notes',
+      placeholder: 'Add a note about this match...',
+      ctrlEnterHint: 'Ctrl+Enter to add',
+      addNote: 'Add Note',
+      deleteNote: 'Delete note',
+      game: 'Game',
+      empty: 'No notes yet. Add observations, tactics, or reminders.',
+    },
+    undoHistory: {
+      title: 'Undo History',
+      empty: 'No actions to undo',
+      undoTo: 'Undo to this point',
+      currentState: 'Current',
+      point: 'Point',
+      game: 'Game',
+      action: 'Action',
+      actionsAgo: (count) => `${count} action${count === 1 ? '' : 's'} ago`,
+    },
+    export: {
+      title: 'Export Match',
+      hint: 'Save a snapshot of the current scoreboard',
+      exportPng: 'Export as PNG',
+      exporting: 'Exporting...',
+      success: 'Image saved!',
+      error: 'Export failed',
+      filename: 'badminton-score',
+    },
+    customGame: {
+      title: 'Custom Game Mode',
+      hint: 'Configure target scores and handicaps',
+      targetScore: 'Target Score',
+      targetScoreHint: 'Points needed to win a game',
+      handicap: 'Handicap',
+      handicapHint: 'Give one player a starting advantage',
+      presets: 'Quick Presets',
+      applyHandicap: 'Apply Handicap',
+      clearHandicap: 'Clear',
+      startingPoints: 'Starting Points',
+    },
+    trends: {
+      title: 'Performance Trends',
+      noData: 'Not enough match data',
+      minMatches: (count) => `Play at least ${count} matches to see trends`,
+      winRate: 'Win Rate',
+      avgScore: 'Avg. Score',
+      avgDuration: 'Avg. Duration',
+      recentMatches: 'Recent Matches',
+      performance: 'Performance',
+      improving: 'Improving',
+      declining: 'Declining',
+      stable: 'Stable',
+    },
   },
   fr: {
     common: {
@@ -827,6 +987,86 @@ export const translations: Record<Language, Translations> = {
       hapticFeedbackDesc: 'Vibrer lors des victoires de jeu et de match',
       showKeyboardShortcuts: 'Afficher les raccourcis clavier',
       appVersion: 'Version de l\'app',
+    },
+    momentum: {
+      title: 'Momentum',
+      notEnoughData: 'Marquez des points pour voir le graphique de momentum',
+      ralliesLabel: 'Échanges',
+      leadChanges: 'Changements de lead',
+      biggestLead: 'Plus grande avance',
+      longestStreak: 'Plus longue série',
+    },
+    headToHead: {
+      title: 'Face-à-face',
+      noMatches: 'Aucun match précédent entre ces joueurs',
+      record: 'Bilan',
+      wins: 'Victoires',
+      lastPlayed: 'Dernier match',
+      avgMargin: 'Écart moyen',
+      recentForm: 'Forme récente',
+    },
+    matchTags: {
+      title: 'Type de match',
+      hint: 'Taguez ce match',
+      training: 'Entraînement',
+      league: 'Ligue',
+      friendly: 'Amical',
+      tournament: 'Tournoi',
+    },
+    matchNotes: {
+      title: 'Notes du match',
+      note: 'note',
+      notes: 'notes',
+      placeholder: 'Ajouter une note sur ce match...',
+      ctrlEnterHint: 'Ctrl+Entrée pour ajouter',
+      addNote: 'Ajouter',
+      deleteNote: 'Supprimer la note',
+      game: 'Jeu',
+      empty: 'Aucune note. Ajoutez des observations, tactiques ou rappels.',
+    },
+    undoHistory: {
+      title: 'Historique des actions',
+      empty: 'Aucune action à annuler',
+      undoTo: 'Annuler jusqu\'à ce point',
+      currentState: 'Actuel',
+      point: 'Point',
+      game: 'Jeu',
+      action: 'Action',
+      actionsAgo: (count) => `il y a ${count} action${count === 1 ? '' : 's'}`,
+    },
+    export: {
+      title: 'Exporter le match',
+      hint: 'Sauvegarder une capture du tableau des scores',
+      exportPng: 'Exporter en PNG',
+      exporting: 'Exportation...',
+      success: 'Image sauvegardée !',
+      error: 'Échec de l\'export',
+      filename: 'score-badminton',
+    },
+    customGame: {
+      title: 'Mode de jeu personnalisé',
+      hint: 'Configurer les scores cibles et handicaps',
+      targetScore: 'Score cible',
+      targetScoreHint: 'Points nécessaires pour gagner un jeu',
+      handicap: 'Handicap',
+      handicapHint: 'Donner un avantage de départ à un joueur',
+      presets: 'Préréglages rapides',
+      applyHandicap: 'Appliquer le handicap',
+      clearHandicap: 'Effacer',
+      startingPoints: 'Points de départ',
+    },
+    trends: {
+      title: 'Tendances de performance',
+      noData: 'Pas assez de données',
+      minMatches: (count) => `Jouez au moins ${count} matchs pour voir les tendances`,
+      winRate: 'Taux de victoire',
+      avgScore: 'Score moyen',
+      avgDuration: 'Durée moyenne',
+      recentMatches: 'Matchs récents',
+      performance: 'Performance',
+      improving: 'En progression',
+      declining: 'En déclin',
+      stable: 'Stable',
     },
   },
 }

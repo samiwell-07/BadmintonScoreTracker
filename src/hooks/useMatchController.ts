@@ -12,6 +12,9 @@ import {
   type MatchState,
   type PlayerId,
   type PlayerProfile,
+  type PointEvent,
+  type MatchTag,
+  type MatchNote,
 } from '../types/match'
 import { clampPoints, didWinGame } from '../utils/match'
 import { showToast } from '../utils/notifications'
@@ -22,7 +25,7 @@ import { createFreshClockState, getLiveElapsedMs } from './matchController/clock
 import { rotateRightCourtTeammate } from './matchController/teammates'
 import { readFromStorage } from './matchController/state'
 import { upsertSavedProfile } from './matchController/savedNames'
-import { createGameId, createMatchId } from './matchController/ids'
+import { createGameId, createMatchId, createPointId, createNoteId } from './matchController/ids'
 import {
   persistCompletedMatchHistory,
   readCompletedMatchHistory,
@@ -119,6 +122,19 @@ export const useMatchController = (t: Translations) => {
         return { ...state, players, clockRunning, clockStartedAt, clockElapsedMs }
       }
 
+      // Track point event for momentum chart
+      const pointEvent: PointEvent = {
+        id: createPointId(),
+        timestamp: Date.now(),
+        scorerId: playerId,
+        scoreSnapshot: {
+          playerA: players.find((p) => p.id === 'playerA')!.points,
+          playerB: players.find((p) => p.id === 'playerB')!.points,
+        },
+        gameNumber: state.completedGames.length + 1,
+      }
+      const pointHistory = [...state.pointHistory, pointEvent]
+
       const scorer = players.find((player) => player.id === playerId)!
 
       if (!nextServerMap[playerId] && scorer.teammates.length > 0) {
@@ -205,6 +221,7 @@ export const useMatchController = (t: Translations) => {
           clockStartedAt,
           clockElapsedMs,
           teammateServerMap: nextServerMap,
+          pointHistory: isMatchWin ? [] : pointHistory, // Reset on match win
         }
       }
 
@@ -216,6 +233,7 @@ export const useMatchController = (t: Translations) => {
         clockStartedAt,
         clockElapsedMs,
         teammateServerMap: nextServerMap,
+        pointHistory,
       }
     })
   }
@@ -420,6 +438,8 @@ export const useMatchController = (t: Translations) => {
       server: 'playerA',
       teammateServerMap: createDefaultTeammateServerMap(),
       favoritePlayerIds: [], // Reset favorites on match reset
+      pointHistory: [], // Reset point history
+      tags: [], // Reset tags
       ...createFreshClockState(),
     }))
   }
@@ -646,6 +666,70 @@ export const useMatchController = (t: Translations) => {
     })
   }
 
+  const handleToggleTag = (tag: MatchTag) => {
+    pushUpdate((state) => {
+      const currentTags = state.tags ?? []
+      const hasTag = currentTags.includes(tag)
+      return {
+        ...state,
+        tags: hasTag
+          ? currentTags.filter((t) => t !== tag)
+          : [...currentTags, tag],
+      }
+    })
+  }
+
+  const handleAddNote = (text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+
+    const note: MatchNote = {
+      id: createNoteId(),
+      timestamp: Date.now(),
+      gameNumber: match.completedGames.length + 1,
+      scoreSnapshot: {
+        playerA: match.players.find((p) => p.id === 'playerA')?.points ?? 0,
+        playerB: match.players.find((p) => p.id === 'playerB')?.points ?? 0,
+      },
+      text: trimmed,
+    }
+
+    pushUpdate((state) => ({
+      ...state,
+      notes: [...(state.notes ?? []), note],
+    }))
+  }
+
+  const handleDeleteNote = (noteId: string) => {
+    pushUpdate((state) => ({
+      ...state,
+      notes: (state.notes ?? []).filter((n) => n.id !== noteId),
+    }))
+  }
+
+  const handleUndoToIndex = (index: number) => {
+    if (index < 0 || index >= history.length) return
+
+    setHistory((previous) => {
+      const targetState = previous[index]
+      if (!targetState) return previous
+
+      setMatch(targetState)
+      // Remove all states up to and including the target
+      return previous.slice(index + 1)
+    })
+  }
+
+  const handleSetStartingPoints = (playerAPoints: number, playerBPoints: number) => {
+    pushUpdate((state) => ({
+      ...state,
+      players: state.players.map((player) => ({
+        ...player,
+        points: player.id === 'playerA' ? playerAPoints : playerBPoints,
+      })),
+    }))
+  }
+
   const matchIsLive = !match.matchWinner
 
   return {
@@ -673,6 +757,11 @@ export const useMatchController = (t: Translations) => {
       handleApplySavedName,
       handleClockToggle,
       handleToggleFavoritePlayer,
+      handleToggleTag,
+      handleAddNote,
+      handleDeleteNote,
+      handleUndoToIndex,
+      handleSetStartingPoints,
       pushUpdate,
     },
   }
@@ -760,5 +849,8 @@ const buildCompletedMatchSummary = ({
     winnerId,
     winnerName,
     players: ensureUniqueProfileNames(playerSummaries),
+    tags: match.tags ?? [],
+    pointHistory: match.pointHistory ?? [],
+    notes: match.notes ?? [],
   }
 }

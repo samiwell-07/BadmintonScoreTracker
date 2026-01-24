@@ -1,5 +1,53 @@
 export type PlayerId = 'playerA' | 'playerB'
 
+// Match tags for categorization
+export const MATCH_TAGS = ['training', 'league', 'friendly', 'tournament'] as const
+export type MatchTag = (typeof MATCH_TAGS)[number]
+
+// Point-by-point history for momentum tracking
+export interface PointEvent {
+  id: string
+  timestamp: number
+  scorerId: PlayerId
+  scoreSnapshot: Record<PlayerId, number>
+  gameNumber: number
+}
+
+// Match notes for coaching
+export interface MatchNote {
+  id: string
+  timestamp: number
+  gameNumber: number
+  scoreSnapshot: Record<PlayerId, number>
+  text: string
+}
+
+// Action types for undo history
+export const HISTORY_ACTION_TYPES = [
+  'point',
+  'name-change',
+  'server-toggle',
+  'swap-ends',
+  'reset-game',
+  'reset-match',
+  'settings-change',
+  'tag-change',
+  'note-add',
+  'note-delete',
+  'other',
+] as const
+export type HistoryActionType = (typeof HISTORY_ACTION_TYPES)[number]
+
+// Head-to-head record between two players
+export interface HeadToHeadRecord {
+  player1Name: string
+  player2Name: string
+  player1Wins: number
+  player2Wins: number
+  lastPlayed: number
+  matchIds: string[]
+}
+
 export interface TeammateState {
   id: string
   name: string
@@ -49,6 +97,12 @@ export interface MatchState {
   doublesMode: boolean
   teammateServerMap: Record<PlayerId, string>
   favoritePlayerIds: PlayerId[]
+  // New: point-by-point history for momentum chart
+  pointHistory: PointEvent[]
+  // New: match tags for categorization
+  tags: MatchTag[]
+  // New: match notes for coaching
+  notes: MatchNote[]
 }
 
 export const STORAGE_KEY = 'bst-score-state'
@@ -91,6 +145,12 @@ export interface CompletedMatchSummary {
   winnerId: PlayerId
   winnerName: string
   players: CompletedMatchPlayerSummary[]
+  // New: tags for match categorization
+  tags: MatchTag[]
+  // New: point-by-point history for momentum chart
+  pointHistory: PointEvent[]
+  // New: match notes
+  notes: MatchNote[]
 }
 
 export const getDefaultName = (playerId: PlayerId) =>
@@ -143,4 +203,7 @@ export const DEFAULT_STATE: MatchState = {
   doublesMode: false,
   teammateServerMap: createDefaultTeammateServerMap(),
   favoritePlayerIds: [],
+  pointHistory: [],
+  tags: [],
+  notes: [],
 }
