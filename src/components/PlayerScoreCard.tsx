@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Avatar,
   Badge,
   Button,
   Card,
@@ -78,6 +79,11 @@ const PlayerScoreCardComponent = ({
   const isGamePoint = didWinGame(player.points + 1, opponent.points, matchConfig)
   const isMatchPoint = isGamePoint && player.games === gamesNeeded - 1
   const isWinner = matchWinner === player.id
+
+  // Find linked profile for avatar
+  const linkedProfile = player.profileId 
+    ? savedNames.find((p) => p.id === player.profileId) 
+    : savedNames.find((p) => p.label.toLowerCase() === player.name.toLowerCase())
   const serviceCourtLabel = player.points % 2 === 0 ? t.rotation.court.right : t.rotation.court.left
   
   // Compute score display class based on state
@@ -166,6 +172,15 @@ const PlayerScoreCardComponent = ({
       <Stack gap="lg" style={{ maxWidth: '100%', overflow: 'hidden' }}>
         <Group justify="space-between" align="flex-start" gap="sm" wrap="wrap">
           <Group gap="xs" align="flex-start" style={{ flex: 1, minWidth: 0 }} wrap="nowrap">
+            {linkedProfile?.avatar && (
+              <Avatar 
+                src={linkedProfile.avatar} 
+                alt={player.name} 
+                size={36} 
+                radius="xl"
+                style={{ flexShrink: 0 }}
+              />
+            )}
             <ActionIcon
               variant="subtle"
               color={isFavorite ? 'yellow' : 'gray'}

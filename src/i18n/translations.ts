@@ -25,6 +25,13 @@ export interface Translations {
     settingsSection: string
     historySection: string
     coachSection: string
+    aboutSection: string
+    aboutDescription: string
+    aboutFeatures: string[]
+    multicourtSection: string
+    multicourtDescription: string
+    multicourtFeatures: string[]
+    comingSoon: string
   }
   app: {
     documentTitle: string
@@ -360,6 +367,22 @@ export interface Translations {
     empty: string
     applied: string
   }
+  multicourt?: {
+    court1: string
+    court2: string
+    player1: string
+    player2: string
+    reset: string
+    resetAll: string
+    tapToScore: string
+    saveNames: string
+    namesSaved: string
+    settings: string
+    matchSettings: string
+    raceTo: string
+    finished: string
+    addCourt: string
+  }
 }
 
 const enCourtLabels: Record<CourtSide, string> = {
@@ -387,7 +410,44 @@ export const translations: Record<Language, Translations> = {
       scoreSection: 'Score counter',
       settingsSection: 'Match settings',
       historySection: 'History & stats',
-      coachSection: 'Manual Entry',
+      coachSection: 'Score Entry',
+      aboutSection: 'About',
+      aboutDescription: 'Badminton Score Tracker is a responsive, offline-friendly application for tracking badminton match scores. Created by Samuel Srouji.',
+      aboutFeatures: [
+        '🎯 Core Scoring: Tap +1/-1 buttons to score. The score number animates with a satisfying pop and slide effect on each point. Auto-tracks serving based on badminton rules, showing which court (left/right) the server is on.',
+        '🏆 Game & Match Detection: Automatically detects game point, match point, and winners. Displays badges and triggers special celebrations when your favorite player wins with confetti animation.',
+        '🔥 Winning Streaks: Visual highlight appears when a player scores 5+ consecutive points, with special styling when combined with match point.',
+        '⚙️ Match Settings: Configure race-to points (default 21), best-of games (1, 3, or 5), win-by-two rule, and doubles mode. Quick presets for Standard, Doubles, Short (15 pts), and Sprint (11 pts) games.',
+        '👥 Player Profiles: Save player names with avatars and colors. Quick-apply favorite names, mark players as favorites for special victory celebrations.',
+        '🎾 Doubles Support: Full doubles mode with court diagram showing all four player positions, service/receive indicators, and teammate rotation tracking.',
+        '🔊 Sound Effects: Point sounds, rising arpeggios for game/match point, victory fanfares, and a tension-building heartbeat sound at crucial moments. All via Web Audio API.',
+        '📳 Haptic Feedback: Vibration patterns for points, game point (double pulse), match point (triple pulse), and celebratory patterns for wins.',
+        '📊 Statistics: Momentum chart showing point differential over time. Head-to-head records between named players with win rates, average margins, and recent form. Performance trends analysis.',
+        '📝 Match Notes: Add timestamped notes during play with game context. Tag matches as Training, League, Friendly, or Tournament.',
+        '↩️ Undo System: Undo last action or view full timeline to jump back to any previous state. See what changed between each state.',
+        '💾 Data Management: Auto-saves to device storage. Export/import JSON backups. Save up to 8 match templates for favorite configurations.',
+        '📸 Export & Share: Save scoreboard as PNG image. Share match results or the app link with friends.',
+        '🖥️ View Modes: Full view with all features, Score-only floating overlay, or Simple Score view with large tap-to-score cards.',
+        '⌨️ Keyboard Shortcuts: A/B for points, Q/W to subtract, U or Ctrl+Z to undo, S to toggle server, E to swap ends, Space for clock.',
+        '♿ Accessibility: Respects reduced motion preferences, screen reader announcements, full keyboard navigation, dark/light themes.',
+        '🔋 Mobile Ready: Keep-screen-on during matches, native sharing, touch-optimized UI, and Android app via Capacitor.',
+        '🌍 Languages: Available in English and French with localized timestamps.',
+      ],
+      multicourtSection: 'Multi-Court',
+      multicourtDescription: 'Manage multiple courts and matches simultaneously. Perfect for tournament directors, club managers, and coaches overseeing multiple games.',
+      multicourtFeatures: [
+        '🎨 Custom Themes: Create your own color schemes with primary and secondary color pickers. Personalize the app to match your club colors.',
+        '👤 Player Avatars: Upload profile pictures or select from built-in avatars. See player faces on score cards and court diagrams.',
+        '🎾 Animated Court: Watch the shuttle animate between server and receiver positions. Visual trajectory shows the flow of play.',
+        '📱 Smart Layouts: Optimized layouts for portrait and landscape orientations. Side-by-side scores in landscape, stacked in portrait.',
+        '📺 TV Mode: Large fonts and high contrast display optimized for streaming and casting to big screens.',
+        '🪟 Picture-in-Picture: Floating mini score window that stays on top while you use other apps.',
+        '📲 Widget Support: Home screen widget showing live score without opening the app (Android).',
+        '⌚ Watch App: Companion app for smartwatches to track scores from your wrist.',
+        '🏟️ Multi-Court View: See all active courts at a glance. Quick switch between matches with live score previews.',
+        '🏆 Tournament Mode: Bracket generation, round robin scheduling, and automatic advancement.',
+      ],
+      comingSoon: '✨ These features are coming soon! Stay tuned for updates.',
     },
     app: {
       documentTitle: 'Badminton Score Tracker',
@@ -749,6 +809,22 @@ export const translations: Record<Language, Translations> = {
       empty: 'No templates saved yet. Save your current settings to create a template.',
       applied: 'Template applied!',
     },
+    multicourt: {
+      court1: 'Court 1',
+      court2: 'Court 2',
+      player1: 'Player 1',
+      player2: 'Player 2',
+      reset: 'Reset',
+      resetAll: 'Reset All Courts',
+      tapToScore: 'Tap to add point',
+      saveNames: 'Save Names',
+      namesSaved: 'Names saved!',
+      settings: 'Settings',
+      matchSettings: 'Match Settings',
+      raceTo: 'Race to',
+      finished: 'Finished',
+      addCourt: 'Add Court',
+    },
   },
   fr: {
     common: {
@@ -764,7 +840,44 @@ export const translations: Record<Language, Translations> = {
       scoreSection: 'Compteur de score',
       settingsSection: 'Paramètres du match',
       historySection: 'Historique et stats',
-      coachSection: 'Saisie manuelle',
+      coachSection: 'Saisie du score',
+      aboutSection: 'À propos',
+      aboutDescription: 'Badminton Score Tracker est une application réactive et hors ligne pour suivre les scores de matchs de badminton. Créé par Samuel Srouji.',
+      aboutFeatures: [
+        '🎯 Score principal : Appuyez sur +1/-1 pour marquer. Le score s\'anime avec un effet pop et glissement satisfaisant. Suivi automatique du service selon les règles du badminton, affichant le côté du court (gauche/droite).',
+        '🏆 Détection de jeu et match : Détecte automatiquement la balle de jeu, balle de match et les gagnants. Affiche des badges et déclenche des célébrations spéciales avec confettis pour votre joueur favori.',
+        '🔥 Séries gagnantes : Mise en évidence visuelle quand un joueur marque 5+ points consécutifs, avec style spécial combiné avec la balle de match.',
+        '⚙️ Paramètres de match : Configurez les points pour gagner (défaut 21), meilleur des manches (1, 3 ou 5), règle du 2 points d\'écart, et mode double. Préréglages rapides pour Standard, Double, Court (15 pts), et Sprint (11 pts).',
+        '👥 Profils joueurs : Sauvegardez les noms avec avatars et couleurs. Application rapide des noms favoris, marquez les joueurs comme favoris pour célébrations spéciales.',
+        '🎾 Support double : Mode double complet avec diagramme du court montrant les 4 positions, indicateurs service/réception, et suivi de rotation.',
+        '🔊 Effets sonores : Sons de points, arpèges montants pour balle de jeu/match, fanfares de victoire, et battement de cœur aux moments cruciaux via Web Audio API.',
+        '📳 Retour haptique : Vibrations pour les points, balle de jeu (double pulsation), balle de match (triple pulsation), et patterns de célébration.',
+        '📊 Statistiques : Graphique de momentum montrant le différentiel de points. Historique face-à-face entre joueurs avec taux de victoire, marges moyennes et forme récente.',
+        '📝 Notes de match : Ajoutez des notes horodatées pendant le jeu. Étiquetez les matchs : Entraînement, Ligue, Amical ou Tournoi.',
+        '↩️ Système d\'annulation : Annulez la dernière action ou consultez la chronologie complète pour revenir à n\'importe quel état.',
+        '💾 Gestion des données : Sauvegarde automatique sur l\'appareil. Export/import de sauvegardes JSON. Jusqu\'à 8 modèles de match.',
+        '📸 Export et partage : Sauvegardez le tableau comme image PNG. Partagez les résultats ou le lien de l\'application.',
+        '🖥️ Modes d\'affichage : Vue complète, superposition score uniquement, ou vue simple avec grandes cartes tactiles.',
+        '⌨️ Raccourcis clavier : A/B pour points, Q/W pour soustraire, U ou Ctrl+Z pour annuler, S pour serveur, E pour changer de côté.',
+        '♿ Accessibilité : Respecte les préférences de mouvement réduit, annonces lecteur d\'écran, navigation clavier, thèmes clair/sombre.',
+        '🔋 Mobile : Écran allumé pendant les matchs, partage natif, interface tactile optimisée, et application Android via Capacitor.',
+        '🌍 Langues : Disponible en anglais et français avec horodatage localisé.',
+      ],
+      multicourtSection: 'Multi-Terrain',
+      multicourtDescription: 'Gérez plusieurs terrains et matchs simultanément. Parfait pour les directeurs de tournoi, gestionnaires de club et entraîneurs supervisant plusieurs parties.',
+      multicourtFeatures: [
+        '🎨 Thèmes personnalisés : Créez vos propres combinaisons de couleurs. Personnalisez l\'application aux couleurs de votre club.',
+        '👤 Avatars joueurs : Téléchargez des photos de profil ou choisissez parmi les avatars intégrés. Voyez les visages sur les cartes de score.',
+        '🎾 Terrain animé : Regardez le volant s\'animer entre serveur et receveur. Trajectoire visuelle du jeu.',
+        '📱 Mises en page intelligentes : Dispositions optimisées pour portrait et paysage. Scores côte à côte en paysage, empilés en portrait.',
+        '📺 Mode TV : Grandes polices et affichage à contraste élevé optimisé pour le streaming et la diffusion sur grands écrans.',
+        '🪟 Picture-in-Picture : Mini fenêtre flottante de score qui reste au-dessus des autres applications.',
+        '📲 Widget : Widget d\'écran d\'accueil affichant le score en direct sans ouvrir l\'application (Android).',
+        '⌚ Application montre : Application compagnon pour montres connectées pour suivre les scores depuis votre poignet.',
+        '🏟️ Vue multi-terrain : Voyez tous les terrains actifs d\'un coup d\'œil. Changement rapide entre les matchs.',
+        '🏆 Mode tournoi : Génération de tableaux, planification de poules, et avancement automatique.',
+      ],
+      comingSoon: '✨ Ces fonctionnalités arrivent bientôt ! Restez à l\'écoute des mises à jour.',
     },
     app: {
       documentTitle: 'Suivi de score badminton',
@@ -1124,6 +1237,22 @@ export const translations: Record<Language, Translations> = {
       namePlaceholder: 'ex: Match de ligue, Séance d\'entraînement',
       empty: 'Aucun modèle enregistré. Enregistrez vos paramètres actuels pour créer un modèle.',
       applied: 'Modèle appliqué !',
+    },
+    multicourt: {
+      court1: 'Terrain 1',
+      court2: 'Terrain 2',
+      player1: 'Joueur 1',
+      player2: 'Joueur 2',
+      reset: 'Réinitialiser',
+      resetAll: 'Réinitialiser tous les terrains',
+      tapToScore: 'Appuyez pour ajouter un point',
+      saveNames: 'Enregistrer les noms',
+      namesSaved: 'Noms enregistrés !',
+      settings: 'Paramètres',
+      matchSettings: 'Paramètres du match',
+      raceTo: 'Points pour gagner',
+      finished: 'Terminé',
+      addCourt: 'Ajouter un terrain',
     },
   },
 }

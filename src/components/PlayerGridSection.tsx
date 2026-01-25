@@ -4,6 +4,7 @@ import type { PlayerId, PlayerProfile, PlayerState } from '../types/match'
 import type { MatchConfig } from '../utils/match'
 import { PlayerScoreCard } from './PlayerScoreCard'
 import { getRotationSummary } from '../utils/doublesRotation'
+import { useDeviceDetect } from '../hooks/useDeviceDetect'
 import type { Translations } from '../i18n/translations'
 
 interface PlayerGridSectionProps {
@@ -57,6 +58,11 @@ const PlayerGridSectionComponent = ({
   onToggleFavorite,
   t,
 }: PlayerGridSectionProps) => {
+  const { isLandscape, isMobile, screenSize } = useDeviceDetect()
+  
+  // Use landscape layout when: explicitly set, or device is in landscape and not tiny mobile
+  const useLandscapeLayout = isTabletLandscape || (isLandscape && screenSize !== 'small')
+  
   const rotationSummary = useMemo(
     () =>
       doublesMode && players.length >= 2
@@ -91,8 +97,8 @@ const PlayerGridSectionComponent = ({
       )}
 
       <SimpleGrid 
-        cols={isTabletLandscape ? 2 : { base: 1, md: 2 }} 
-        spacing={isTabletLandscape ? 'md' : 'lg'}
+        cols={useLandscapeLayout ? 2 : { base: 1, md: 2 }} 
+        spacing={useLandscapeLayout ? 'md' : 'lg'}
       >
         {players.map((player, index) => {
           const opponent = players[(index + 1) % players.length]

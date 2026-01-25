@@ -2,6 +2,7 @@ import { Button, Card, SimpleGrid, Stack, Text } from '@mantine/core'
 import type { PlayerId, PlayerState } from '../types/match'
 import type { Translations } from '../i18n/translations'
 import { AnimatedScore } from './AnimatedScore'
+import { useDeviceDetect } from '../hooks/useDeviceDetect'
 
 interface SimpleScoreViewProps {
   players: PlayerState[]
@@ -23,12 +24,23 @@ export const SimpleScoreView = ({
   onExit,
   t,
   reducedMotion = false,
-}: SimpleScoreViewProps) => (
+}: SimpleScoreViewProps) => {
+  const { isLandscape, screenSize } = useDeviceDetect()
+  
+  // In landscape, always use side-by-side layout
+  const useLandscapeLayout = isLandscape || screenSize !== 'small'
+  
+  return (
   <Stack gap="lg" align="center" w="100%" style={{ maxWidth: '100%' }}>
     <Button size="sm" color="teal" onClick={onExit}>
       {t.common.showFullView}
     </Button>
-    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg" w="100%" style={{ maxWidth: '100%' }}>
+    <SimpleGrid 
+      cols={useLandscapeLayout ? 2 : 1} 
+      spacing="lg" 
+      w="100%" 
+      style={{ maxWidth: '100%' }}
+    >
       {players.map((player) => (
         <Card
           key={player.id}
@@ -42,7 +54,7 @@ export const SimpleScoreView = ({
             overflow: 'hidden',
             cursor: matchIsLive ? 'pointer' : 'default',
             transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-            minHeight: '200px',
+            minHeight: isLandscape ? '40vh' : '200px',
           }}
           onClick={() => matchIsLive && onPointChange(player.id, 1)}
           onKeyDown={(e) => {
@@ -76,7 +88,11 @@ export const SimpleScoreView = ({
             </Text>
             <AnimatedScore
               value={player.points}
-              style={{ fontSize: 'clamp(4rem, 20vw, 8rem)', lineHeight: 1, fontWeight: 700 }}
+              style={{ 
+                fontSize: isLandscape ? 'clamp(4rem, 15vw, 10rem)' : 'clamp(4rem, 20vw, 8rem)', 
+                lineHeight: 1, 
+                fontWeight: 700 
+              }}
               reducedMotion={reducedMotion}
             />
             <Text size="sm" c={mutedText} ta="center">
@@ -87,4 +103,5 @@ export const SimpleScoreView = ({
       ))}
     </SimpleGrid>
   </Stack>
-)
+  )
+}

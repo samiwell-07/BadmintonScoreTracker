@@ -4,7 +4,6 @@ import {
   Card,
   Group,
   Stack,
-  Text,
   Title,
   Tooltip,
   type MantineColorScheme,
@@ -18,7 +17,6 @@ const APP_URL = 'https://srouji.github.io/BadmintonScoreTracker/'
 
 interface MatchHeaderProps {
   cardBg: string
-  mutedText: string
   onUndo: () => void
   onToggleColorMode: () => void
   colorScheme: MantineColorScheme
@@ -72,7 +70,6 @@ const handleShareApp = async (t: Translations) => {
 
 export const MatchHeader = ({
   cardBg,
-  mutedText,
   onUndo,
   onToggleColorMode,
   colorScheme,
@@ -91,13 +88,6 @@ export const MatchHeader = ({
         <Group gap={0} align="flex-start" style={{ flex: 1, minWidth: '16rem' }}>
           <div>
             <Title order={2}>{t.app.headerTitle}</Title>
-            <Stack gap={4} mt="xs">
-              {t.app.descriptionLines.map((line) => (
-                <Text key={line} c={mutedText}>
-                  {line}
-                </Text>
-              ))}
-            </Stack>
           </div>
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <img

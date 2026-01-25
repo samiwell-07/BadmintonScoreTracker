@@ -855,6 +855,7 @@ export const useMatchController = (t: Translations) => {
       handleQuickRematch,
       handleApplyTemplate,
       pushUpdate,
+      recordCompletedMatch,
     },
   }
 }

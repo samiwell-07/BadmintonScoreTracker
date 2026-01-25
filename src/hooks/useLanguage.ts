@@ -3,6 +3,8 @@ import { translations, type Language } from '../i18n/translations'
 
 const STORAGE_KEY = 'bst-language'
 
+const SUPPORTED_LANGUAGES: Language[] = ['en', 'fr']
+
 const readInitialLanguage = (): Language => {
   if (typeof window === 'undefined') {
     return 'en'
@@ -59,6 +61,7 @@ export const useLanguage = () => {
     language,
     setLanguage,
     toggleLanguage,
+    availableLanguages: SUPPORTED_LANGUAGES,
     t,
   }
 }

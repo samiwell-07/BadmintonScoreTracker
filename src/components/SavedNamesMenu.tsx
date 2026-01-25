@@ -39,6 +39,13 @@ export const SavedNamesMenu = ({
   const remainingProfiles = savedNames.slice(quickApplyProfiles.length)
 
   const renderAvatar = (profile: PlayerProfile) => {
+    // If profile has an avatar image, show it
+    if (profile.avatar) {
+      return (
+        <Avatar size={20} radius="xl" src={profile.avatar} alt={profile.label} />
+      )
+    }
+    // Otherwise show icon or first letter
     const label = profile.icon ?? profile.label.charAt(0).toUpperCase()
     return (
       <Avatar size={20} radius="xl" color={profile.color} variant="light">

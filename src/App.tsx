@@ -56,6 +56,7 @@ export const APP_VERSION = '1.0.0'
 const STORAGE_KEYS = {
   scoreOnly: 'scoreOnlyMode',
   simpleScore: 'simpleScoreMode',
+  tvMode: 'tvMode',
 } as const
 
 const readStoredBoolean = (key: string, fallback = false) => {
@@ -109,6 +110,16 @@ const MatchStatsPanel = lazy(() =>
     default: MatchStatsPanel,
   })),
 )
+const TVModeView = lazy(() =>
+  import('./components/TVModeView').then(({ TVModeView }) => ({
+    default: TVModeView,
+  })),
+)
+const MultiCourtView = lazy(() =>
+  import('./components/MultiCourtView').then(({ MultiCourtView }) => ({
+    default: MultiCourtView,
+  })),
+)
 
 function App() {
   const { language, toggleLanguage, t } = useLanguage()
@@ -123,7 +134,10 @@ function App() {
   const [simpleScoreMode, setSimpleScoreMode] = useState(() =>
     readStoredBoolean(STORAGE_KEYS.simpleScore),
   )
-  type MenuSection = 'score' | 'settings' | 'history' | 'coach'
+  const [tvMode, setTvMode] = useState(() =>
+    readStoredBoolean(STORAGE_KEYS.tvMode),
+  )
+  type MenuSection = 'score' | 'settings' | 'history' | 'coach' | 'about' | 'multicourt'
   const [menuOpened, setMenuOpened] = useState(false)
   const [menuSection, setMenuSection] = useState<MenuSection>('score')
   const statsSectionRef = useRef<HTMLDivElement | null>(null)
@@ -193,6 +207,7 @@ function App() {
     handleQuickRematch,
     handleApplyTemplate,
     pushUpdate,
+    recordCompletedMatch,
   } = actions
 
   // Keyboard shortcuts
@@ -257,6 +272,11 @@ function App() {
 
   useDebouncedBooleanStorage(STORAGE_KEYS.scoreOnly, scoreOnlyMode)
   useDebouncedBooleanStorage(STORAGE_KEYS.simpleScore, simpleScoreMode)
+  useDebouncedBooleanStorage(STORAGE_KEYS.tvMode, tvMode)
+
+  const handleTvModeToggle = useCallback(() => {
+    setTvMode((prev) => !prev)
+  }, [])
 
   const matchConfig: MatchConfig = useMemo(
     () => ({
@@ -478,6 +498,8 @@ function App() {
                 ['settings', t.menu.settingsSection],
                 ['history', t.menu.historySection],
                 ['coach', t.menu.coachSection],
+                ['multicourt', t.menu.multicourtSection],
+                ['about', t.menu.aboutSection],
               ] as const).map(([section, label]) => (
                 <Button
                   key={section}
@@ -494,6 +516,29 @@ function App() {
       </Drawer>
     </>
   )
+
+  // TV Mode - fullscreen high-contrast display for streaming/casting
+  if (tvMode) {
+    return (
+      <ProfilerWrapper id="App-TVMode">
+        <AnnouncerRegion />
+        <Suspense fallback={<Box style={{ backgroundColor: '#000', minHeight: '100vh' }} />}>
+          <TVModeView
+            players={match.players}
+            server={match.server}
+            gamesNeeded={gamesNeeded}
+            matchConfig={matchConfig}
+            matchIsLive={matchIsLive}
+            matchWinner={match.matchWinner}
+            onPointChange={handlePointChange}
+            onExit={handleTvModeToggle}
+            t={t}
+            reducedMotion={prefersReducedMotion}
+          />
+        </Suspense>
+      </ProfilerWrapper>
+    )
+  }
 
   if (simpleScoreMode) {
     return (
@@ -570,11 +615,10 @@ function App() {
       >
         <Container size="lg" style={{ paddingTop: isTabletLandscape ? '1rem' : '2.5rem', paddingBottom: isTabletLandscape ? '1.5rem' : '3.5rem', maxWidth: '100%' }}>
           <Stack gap="lg">
-            {!scoreOnlyMode && (
+            {!scoreOnlyMode && menuSection !== 'multicourt' && (
               <ProfilerWrapper id="MatchHeader">
                 <MatchHeader
                   cardBg={cardBg}
-                  mutedText={mutedText}
                   onUndo={handleUndo}
                   onToggleColorMode={toggleColorMode}
                   colorScheme={colorScheme}
@@ -751,15 +795,18 @@ function App() {
                     soundEnabled={soundEnabled}
                     hapticEnabled={hapticEnabled}
                     keepScreenOn={keepScreenOn}
+                    tvMode={tvMode}
                     onSoundToggle={handleSoundToggle}
                     onHapticToggle={handleHapticToggle}
                     onKeepScreenOnToggle={handleKeepScreenOnToggle}
+                    onTvModeToggle={handleTvModeToggle}
                     onShowOnboarding={openOnboarding}
                     t={t}
                   />
-                  <DataManagementCard
+                  <CustomGameModeCard
+                    match={match}
+                    onSetStartingPoints={handleSetStartingPoints}
                     cardBg={cardBg}
-                    mutedText={mutedText}
                     t={t}
                   />
                 </Stack>
@@ -790,6 +837,11 @@ function App() {
                       />
                     </Suspense>
                   </div>
+                  <DataManagementCard
+                    cardBg={cardBg}
+                    mutedText={mutedText}
+                    t={t}
+                  />
                 </Stack>
               )}
 
@@ -806,13 +858,38 @@ function App() {
                     onApplySavedName={handleApplySavedName}
                     t={t}
                   />
-                  <CustomGameModeCard
-                    match={match}
-                    onSetStartingPoints={handleSetStartingPoints}
-                    cardBg={cardBg}
-                    t={t}
-                  />
                 </Stack>
+              )}
+
+            {menuSection === 'about' && (
+                <Stack gap="lg">
+                  <Text size="lg" fw={600}>{t.menu.aboutSection}</Text>
+                  <Text>{t.menu.aboutDescription}</Text>
+                  <Stack gap="sm">
+                    {t.menu.aboutFeatures.map((feature, index) => (
+                      <Text key={index} size="sm">{feature}</Text>
+                    ))}
+                  </Stack>
+                </Stack>
+              )}
+
+            {menuSection === 'multicourt' && (
+                <Suspense fallback={<SimpleScoreViewSkeleton />}>
+                  <MultiCourtView 
+                    cardBg={cardBg} 
+                    t={t} 
+                    savedNames={match.savedNames}
+                    onSaveName={(name) => {
+                      pushUpdate((state) => ({
+                        ...state,
+                        savedNames: [...state.savedNames.filter(p => p.label.toLowerCase() !== name.toLowerCase()), { id: `profile-${Date.now()}-${Math.random()}`, label: name, color: 'blue' }].slice(0, 50),
+                      }))
+                    }}
+                    onMatchComplete={(summary) => {
+                      recordCompletedMatch(summary)
+                    }}
+                  />
+                </Suspense>
               )}
 
             <ScoreOnlyOverlays

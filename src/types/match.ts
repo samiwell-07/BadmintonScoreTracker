@@ -69,6 +69,7 @@ export interface PlayerProfile {
   label: string
   color: ProfileColor
   icon?: string
+  avatar?: string  // Base64 data URL or external URL for player photo
 }
 
 export interface PlayerState {
@@ -151,6 +152,9 @@ export interface CompletedMatchSummary {
   pointHistory: PointEvent[]
   // New: match notes
   notes: MatchNote[]
+  // Multi-court tracking
+  isMultiCourt?: boolean
+  courtName?: string
 }
 
 export const getDefaultName = (playerId: PlayerId) =>
