@@ -874,7 +874,7 @@ function App() {
               )}
 
             {menuSection === 'multicourt' && (
-                <Suspense fallback={<SimpleScoreViewSkeleton />}>
+                <Suspense fallback={<SimpleScoreViewSkeleton cardBg={cardBg} />}>
                   <MultiCourtView 
                     cardBg={cardBg} 
                     t={t} 
@@ -882,7 +882,7 @@ function App() {
                     onSaveName={(name) => {
                       pushUpdate((state) => ({
                         ...state,
-                        savedNames: [...state.savedNames.filter(p => p.label.toLowerCase() !== name.toLowerCase()), { id: `profile-${Date.now()}-${Math.random()}`, label: name, color: 'blue' }].slice(0, 50),
+                        savedNames: [...state.savedNames.filter(p => p.label.toLowerCase() !== name.toLowerCase()), { id: `profile-${Date.now()}-${Math.random()}`, label: name, color: 'blue' as const }].slice(0, 50),
                       }))
                     }}
                     onMatchComplete={(summary) => {

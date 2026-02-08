@@ -58,7 +58,7 @@ const PlayerGridSectionComponent = ({
   onToggleFavorite,
   t,
 }: PlayerGridSectionProps) => {
-  const { isLandscape, isMobile, screenSize } = useDeviceDetect()
+  const { isLandscape, screenSize } = useDeviceDetect()
   
   // Use landscape layout when: explicitly set, or device is in landscape and not tiny mobile
   const useLandscapeLayout = isTabletLandscape || (isLandscape && screenSize !== 'small')
