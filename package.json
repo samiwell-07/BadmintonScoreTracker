@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "azure:what-if": "pwsh -NoProfile -File ./scripts/Deploy-Infrastructure.ps1 -WhatIf",
+    "azure:deploy": "pwsh -NoProfile -File ./scripts/Deploy-Infrastructure.ps1",
+    "azure:publish": "pwsh -NoProfile -File ./scripts/Publish-StaticWebApp.ps1"
   },
   "dependencies": {
     "lucide-react": "^1.33.0",
@@ -17,6 +20,7 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@azure/static-web-apps-cli": "^2.0.10",
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",

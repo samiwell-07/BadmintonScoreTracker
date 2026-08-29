@@ -58,6 +58,26 @@ npm run lint   # Check code quality
 npm run build  # Type-check and create a production build
 ```
 
+## Azure Deployment
+
+The Bicep deployment creates a dedicated resource group and Free Azure Static Web App, adds only the `badminton` CNAME in the existing `srouji.org` DNS zone, and associates `badminton.srouji.org` with the app.
+
+Prerequisites: Azure CLI, Bicep CLI, PowerShell 7, Node.js, and access to subscription `a06337ad-e909-48b6-b246-e03d1fa6ce03`.
+
+```powershell
+npm run azure:what-if  # Preview infrastructure changes
+npm run azure:deploy   # Provision Azure resources and DNS
+npm run azure:publish  # Test, build, and publish future updates
+```
+
+Run `npm ci` once after cloning. Routine publishes reuse installed dependencies so an active Vite server cannot lock files during a reinstall. To reinstall as part of publishing, stop the development server first and run:
+
+```powershell
+./scripts/Publish-StaticWebApp.ps1 -InstallDependencies
+```
+
+The infrastructure script refuses to modify an existing `badminton` DNS record unless it already points to this deployment's Static Web App. The publish script retrieves the deployment token at runtime and never writes it to disk.
+
 ## Source Structure
 
 ```text
