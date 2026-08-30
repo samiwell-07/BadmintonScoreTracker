@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   CenterControl,
   type CenterControlAction,
@@ -21,6 +21,7 @@ import {
   type GeneralSettings,
 } from './generalSettings'
 import {
+  DEFAULT_MATCH_SETTINGS,
   loadMatchSettings,
   saveMatchSettings,
   type MatchSettings,
@@ -37,7 +38,20 @@ import type {
   PlayerIndex,
   SideId,
 } from './scoreboard.types'
+import { TutorialOverlay } from '../tutorial/TutorialOverlay'
+import { TutorialExitDialog } from '../tutorial/TutorialExitDialog'
+import { TutorialWelcome } from '../tutorial/TutorialWelcome'
+import {
+  dismissTutorial,
+  loadTutorialPreference,
+} from '../tutorial/tutorialPersistence'
+import {
+  TUTORIAL_STEPS,
+  canAdvanceTutorial,
+  type TutorialAction,
+} from '../tutorial/tutorialState'
 import './scoreboard.css'
+import '../tutorial/tutorial.css'
 
 const countSetWins = (sets: CompletedSet[], side: SideId) =>
   sets.filter((set) => set.winner === side).length
@@ -116,6 +130,68 @@ type ServiceSelection =
       leftCourtPlayerIndexes: Record<SideId, PlayerIndex>
     }
 
+type TutorialMode = 'offer' | 'running' | null
+
+interface TutorialSnapshot {
+  generalSettings: GeneralSettings
+  isCenterControlOpen: boolean
+  isHistoryOpen: boolean
+  isResetDialogOpen: boolean
+  isSettingsDialogOpen: boolean
+  matchSettings: MatchSettings
+  matchState: MatchState
+  selectedSetNumber: number | null
+  serviceSelection: ServiceSelection | null
+}
+
+const TUTORIAL_RULES: MatchSettings = {
+  pointsToWin: 2,
+  winByTwo: false,
+  maximumScore: 3,
+  gamesToWin: 2,
+}
+
+const createTutorialMatch = (leftScore = 0, rightScore = 0): MatchState => {
+  const state = createFreshMatchState()
+  state.sides.left.name = 'Left Team'
+  state.sides.right.name = 'Right Team'
+  state.sides.left.playerNames = ['Alex', 'Blake']
+  state.sides.right.playerNames = ['Casey', 'Drew']
+  state.sides.left.score = leftScore
+  state.sides.right.score = rightScore
+  state.activeRules = leftScore || rightScore ? TUTORIAL_RULES : null
+  return state
+}
+
+const createTutorialCompletedSet = (): CompletedSet => ({
+  setNumber: 1,
+  leftName: 'Left Team',
+  rightName: 'Right Team',
+  leftScore: 21,
+  rightScore: 18,
+  winner: 'left',
+  rules: DEFAULT_MATCH_SETTINGS,
+  previousLeftScore: 20,
+  previousRightScore: 18,
+  previousDoublesService: null,
+  previousServingSide: 'right',
+})
+
+const createTutorialHistoryMatch = (): MatchState => ({
+  ...createTutorialMatch(),
+  activeRules: TUTORIAL_RULES,
+  completedSets: [createTutorialCompletedSet()],
+})
+
+const createTutorialResultMatch = (): MatchState => ({
+  ...createTutorialMatch(21, 18),
+  activeRules: DEFAULT_MATCH_SETTINGS,
+  completedSets: [createTutorialCompletedSet()],
+  phase: 'gameWon',
+  resultDialogOpen: true,
+  servingSide: 'left',
+})
+
 export function Scoreboard() {
   const [matchState, setMatchState] = useState(loadMatchState)
   const [isCenterControlOpen, setIsCenterControlOpen] = useState(false)
@@ -127,10 +203,18 @@ export function Scoreboard() {
   const [selectedSetNumber, setSelectedSetNumber] = useState<number | null>(null)
   const [matchSettings, setMatchSettings] = useState(loadMatchSettings)
   const [generalSettings, setGeneralSettings] = useState(loadGeneralSettings)
+  const [tutorialMode, setTutorialMode] = useState<TutorialMode>(() =>
+    loadTutorialPreference().dismissed ? null : 'offer',
+  )
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
+  const [isTutorialExitOpen, setIsTutorialExitOpen] = useState(false)
+  const tutorialSnapshot = useRef<TutorialSnapshot | null>(null)
 
   useEffect(() => {
-    saveMatchState(matchState)
-  }, [matchState])
+    if (tutorialMode !== 'running') {
+      saveMatchState(matchState)
+    }
+  }, [matchState, tutorialMode])
 
   useEffect(() => {
     if (!serviceSelection) {
@@ -146,6 +230,176 @@ export function Scoreboard() {
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [serviceSelection])
+
+  const restoreTutorialSnapshot = () => {
+    const snapshot = tutorialSnapshot.current
+    if (!snapshot) return
+
+    setMatchState(snapshot.matchState)
+    setGeneralSettings(snapshot.generalSettings)
+    setMatchSettings(snapshot.matchSettings)
+    setIsCenterControlOpen(snapshot.isCenterControlOpen)
+    setIsResetDialogOpen(snapshot.isResetDialogOpen)
+    setIsSettingsDialogOpen(snapshot.isSettingsDialogOpen)
+    setServiceSelection(snapshot.serviceSelection)
+    setIsHistoryOpen(snapshot.isHistoryOpen)
+    setSelectedSetNumber(snapshot.selectedSetNumber)
+    tutorialSnapshot.current = null
+  }
+
+  const finishTutorial = () => {
+    restoreTutorialSnapshot()
+    dismissTutorial()
+    setTutorialMode(null)
+    setTutorialStepIndex(0)
+    setIsTutorialExitOpen(false)
+  }
+
+  const skipAllTutorial = () => {
+    if (tutorialMode === 'running') {
+      restoreTutorialSnapshot()
+    }
+    dismissTutorial()
+    setTutorialMode(null)
+    setTutorialStepIndex(0)
+    setIsTutorialExitOpen(false)
+  }
+
+  const prepareTutorialStep = (stepIndex: number) => {
+    const action = TUTORIAL_STEPS[stepIndex]?.action
+    const closePracticeUi = () => {
+      setIsCenterControlOpen(false)
+      setIsResetDialogOpen(false)
+      setIsSettingsDialogOpen(false)
+      setServiceSelection(null)
+      setIsHistoryOpen(false)
+      setSelectedSetNumber(null)
+    }
+
+    if (action === 'add-left') {
+      closePracticeUi()
+      setGeneralSettings((current) => ({
+        ...current,
+        playerServeIndicatorEnabled: false,
+      }))
+      setMatchState(createTutorialMatch())
+    } else if (action === 'remove-left') {
+      setMatchState(createTutorialMatch(1, 1))
+    } else if (action === 'transfer-right-left') {
+      setMatchState(createTutorialMatch(0, 1))
+    } else if (action === 'edit-name') {
+      closePracticeUi()
+      setMatchState(createTutorialMatch(1, 0))
+    } else if (action === 'open-menu') {
+      setIsCenterControlOpen(false)
+    } else if (action === 'swap' || action === 'reset') {
+      setIsCenterControlOpen(true)
+    } else if (action === 'cancel-reset') {
+      setIsCenterControlOpen(false)
+      setIsResetDialogOpen(true)
+    } else if (action === 'service') {
+      closePracticeUi()
+      setGeneralSettings((current) => ({
+        ...current,
+        playerServeIndicatorEnabled: false,
+      }))
+      setMatchState(createTutorialMatch())
+      setIsCenterControlOpen(true)
+    } else if (action === 'team-service') {
+      setGeneralSettings((current) => ({
+        ...current,
+        playerServeIndicatorEnabled: false,
+      }))
+      setServiceSelection({ mode: 'team' })
+    } else if (action === 'doubles-service') {
+      setGeneralSettings((current) => ({
+        ...current,
+        playerServeIndicatorEnabled: true,
+      }))
+      setServiceSelection(null)
+      setIsCenterControlOpen(true)
+    } else if (action === 'left-court-player') {
+      setServiceSelection({
+        mode: 'leftCourt',
+        side: 'left',
+        leftCourtPlayerIndexes: {},
+      })
+    } else if (action === 'right-court-player') {
+      setServiceSelection({
+        mode: 'leftCourt',
+        side: 'right',
+        leftCourtPlayerIndexes: { left: 0 },
+      })
+    } else if (action === 'server-player') {
+      setServiceSelection({
+        mode: 'server',
+        leftCourtPlayerIndexes: { left: 0, right: 0 },
+      })
+    } else if (action === 'settings') {
+      setServiceSelection(null)
+      setIsSettingsDialogOpen(false)
+      setIsCenterControlOpen(true)
+    } else if (action === 'close-settings') {
+      setIsCenterControlOpen(false)
+      setIsSettingsDialogOpen(true)
+    } else if (action === 'open-history') {
+      closePracticeUi()
+      setMatchState(createTutorialHistoryMatch())
+    } else if (action === 'select-history') {
+      setMatchState(createTutorialHistoryMatch())
+      setIsHistoryOpen(true)
+      setSelectedSetNumber(null)
+    } else if (action === 'back-history') {
+      setMatchState(createTutorialHistoryMatch())
+      setIsHistoryOpen(false)
+      setSelectedSetNumber(1)
+    } else if (action === 'next-game') {
+      closePracticeUi()
+      setMatchState(createTutorialResultMatch())
+    }
+  }
+
+  const startTutorial = () => {
+    tutorialSnapshot.current = {
+      matchState,
+      generalSettings,
+      matchSettings,
+      isCenterControlOpen,
+      isResetDialogOpen,
+      isSettingsDialogOpen,
+      serviceSelection,
+      isHistoryOpen,
+      selectedSetNumber,
+    }
+    setTutorialStepIndex(0)
+    setTutorialMode('running')
+    setIsTutorialExitOpen(false)
+    setGeneralSettings({
+      ...generalSettings,
+      hapticsEnabled: false,
+      playerServeIndicatorEnabled: false,
+      teamServeIndicatorEnabled: true,
+    })
+    setMatchSettings(TUTORIAL_RULES)
+    prepareTutorialStep(0)
+  }
+
+  const completeTutorialAction = (action: TutorialAction) => {
+    if (
+      tutorialMode !== 'running' ||
+      !canAdvanceTutorial(tutorialStepIndex, action)
+    ) {
+      return
+    }
+
+    if (tutorialStepIndex === TUTORIAL_STEPS.length - 1) {
+      finishTutorial()
+    } else {
+      const nextStepIndex = tutorialStepIndex + 1
+      prepareTutorialStep(nextStepIndex)
+      setTutorialStepIndex(nextStepIndex)
+    }
+  }
 
   const selectedSet = selectedSetNumber === null
     ? null
@@ -211,6 +465,7 @@ export function Scoreboard() {
         generalSettings.playerServeIndicatorEnabled,
       )
     })
+    completeTutorialAction(side === 'left' ? 'add-left' : 'add-right')
   }
 
   const removePoint = (side: SideId) => {
@@ -246,6 +501,9 @@ export function Scoreboard() {
         activeRules: shouldUnlockRules ? null : current.activeRules,
       }
     })
+    if (side === 'left') {
+      completeTutorialAction('remove-left')
+    }
   }
 
   const transferPoint = (source: SideId, destination: SideId) => {
@@ -298,6 +556,11 @@ export function Scoreboard() {
         generalSettings.playerServeIndicatorEnabled,
       )
     })
+    if (source === 'right' && destination === 'left') {
+      completeTutorialAction('transfer-right-left')
+    } else if (source === 'left' && destination === 'right') {
+      completeTutorialAction('transfer-left-right')
+    }
   }
 
   const updateName = (side: SideId, name: string) => {
@@ -499,6 +762,21 @@ export function Scoreboard() {
       setIsCenterControlOpen(false)
       setIsSettingsDialogOpen(true)
     }
+
+    if (
+      action === 'swap' ||
+      action === 'reset' ||
+      action === 'service' ||
+      action === 'settings'
+    ) {
+      completeTutorialAction(
+        action === 'service' &&
+          tutorialMode === 'running' &&
+          TUTORIAL_STEPS[tutorialStepIndex]?.action === 'doubles-service'
+          ? 'doubles-service'
+          : action,
+      )
+    }
   }
 
   const selectService = (side: SideId) => {
@@ -518,6 +796,7 @@ export function Scoreboard() {
         : current,
     )
     setServiceSelection(null)
+    completeTutorialAction('team-service')
   }
 
   const selectServicePlayer = (side: SideId, playerIndex: PlayerIndex) => {
@@ -544,6 +823,9 @@ export function Scoreboard() {
             leftCourtPlayerIndexes as Record<SideId, PlayerIndex>,
         })
       }
+      completeTutorialAction(
+        side === 'left' ? 'left-court-player' : 'right-court-player',
+      )
       return
     }
 
@@ -568,6 +850,7 @@ export function Scoreboard() {
       ),
     }))
     setServiceSelection(null)
+    completeTutorialAction('server-player')
   }
 
   const updateMatchSettings = (settings: MatchSettings) => {
@@ -580,6 +863,13 @@ export function Scoreboard() {
     setGeneralSettings(settings)
     saveGeneralSettings(settings)
     setIsSettingsDialogOpen(false)
+  }
+
+  const handleCenterOpenChange = (isOpen: boolean) => {
+    setIsCenterControlOpen(isOpen)
+    if (isOpen) {
+      completeTutorialAction('open-menu')
+    }
   }
 
   const latestCompletedSet = matchState.completedSets.at(-1)
@@ -645,6 +935,7 @@ export function Scoreboard() {
         onAddPoint={() => addPoint('left')}
         onRemovePoint={() => removePoint('left')}
         onNameChange={(name) => updateName('left', name)}
+        onNameEditStart={() => completeTutorialAction('edit-name')}
         onPlayerNameChange={(playerIndex, playerName) =>
           updatePlayerName('left', playerIndex, playerName)
         }
@@ -673,6 +964,7 @@ export function Scoreboard() {
         onAddPoint={() => addPoint('right')}
         onRemovePoint={() => removePoint('right')}
         onNameChange={(name) => updateName('right', name)}
+        onNameEditStart={() => completeTutorialAction('edit-name')}
         onPlayerNameChange={(playerIndex, playerName) =>
           updatePlayerName('right', playerIndex, playerName)
         }
@@ -696,24 +988,34 @@ export function Scoreboard() {
           disabledActions={isFrozen ? ['swap', 'service'] : []}
           isOpen={isCenterControlOpen}
           onAction={handleCenterAction}
-          onOpenChange={setIsCenterControlOpen}
+          onOpenChange={handleCenterOpenChange}
         />
       )}
       <SetHistoryControl
         completedSets={matchState.completedSets}
         isOpen={isHistoryOpen}
         selectedSetNumber={selectedSetNumber}
-        onBack={() => setSelectedSetNumber(null)}
+        onBack={() => {
+          setSelectedSetNumber(null)
+          completeTutorialAction('back-history')
+        }}
         onSelect={(setNumber) => {
           setSelectedSetNumber(setNumber)
           setIsHistoryOpen(false)
+          completeTutorialAction('select-history')
         }}
-        onToggle={() => setIsHistoryOpen((isOpen) => !isOpen)}
+        onToggle={() => {
+          setIsHistoryOpen((isOpen) => !isOpen)
+          completeTutorialAction('open-history')
+        }}
       />
       {isResetDialogOpen && (
         <ResetMatchDialog
           forceResetCompletedSets={matchState.phase === 'matchWon'}
-          onCancel={() => setIsResetDialogOpen(false)}
+          onCancel={() => {
+            setIsResetDialogOpen(false)
+            completeTutorialAction('cancel-reset')
+          }}
           onConfirm={resetMatch}
         />
       )}
@@ -722,9 +1024,13 @@ export function Scoreboard() {
           generalSettings={generalSettings}
           isLocked={rulesLocked}
           settings={matchSettings}
-          onCancel={() => setIsSettingsDialogOpen(false)}
+          onCancel={() => {
+            setIsSettingsDialogOpen(false)
+            completeTutorialAction('close-settings')
+          }}
           onSave={updateMatchSettings}
           onSaveGeneralSettings={updateGeneralSettings}
+          onStartTutorial={startTutorial}
         />
       )}
       {latestCompletedSet &&
@@ -735,6 +1041,7 @@ export function Scoreboard() {
             leftSetsWon={countSetWins(matchState.completedSets, 'left')}
             phase={matchState.phase}
             rightSetsWon={countSetWins(matchState.completedSets, 'right')}
+            tutorialSafeShare={tutorialMode === 'running'}
             onCloseMatch={() =>
               setMatchState((current) => ({
                 ...current,
@@ -742,10 +1049,48 @@ export function Scoreboard() {
               }))
             }
             onNewMatch={startNewMatch}
-            onNextGame={beginNextGame}
-            onUndoWinningPoint={undoWinningPoint}
+            onNextGame={() => {
+              beginNextGame()
+              completeTutorialAction('next-game')
+            }}
+            onTutorialAction={(action) =>
+              completeTutorialAction(
+                action === 'copy' ? 'copy-result' : 'share-result',
+              )
+            }
+            onUndoWinningPoint={() => {
+              undoWinningPoint()
+              completeTutorialAction('undo-result')
+            }}
           />
         )}
+      {tutorialMode === 'offer' && (
+        <TutorialWelcome
+          onSkipAll={skipAllTutorial}
+          onStart={startTutorial}
+        />
+      )}
+      {tutorialMode === 'running' && TUTORIAL_STEPS[tutorialStepIndex] && (
+        <TutorialOverlay
+          step={TUTORIAL_STEPS[tutorialStepIndex]}
+          stepIndex={tutorialStepIndex}
+          totalSteps={TUTORIAL_STEPS.length}
+          onFinish={finishTutorial}
+          onBack={() => {
+            const previousStepIndex = Math.max(0, tutorialStepIndex - 1)
+            prepareTutorialStep(previousStepIndex)
+            setTutorialStepIndex(previousStepIndex)
+          }}
+          onRequestExit={() => setIsTutorialExitOpen(true)}
+          onSkipAll={skipAllTutorial}
+        />
+      )}
+      {tutorialMode === 'running' && isTutorialExitOpen && (
+        <TutorialExitDialog
+          onContinue={() => setIsTutorialExitOpen(false)}
+          onSkipAll={skipAllTutorial}
+        />
+      )}
     </main>
   )
 }

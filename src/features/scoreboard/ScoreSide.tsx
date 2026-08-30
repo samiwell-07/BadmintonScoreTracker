@@ -45,6 +45,7 @@ interface ScoreSideProps {
   onAddPoint: () => void
   onRemovePoint: () => void
   onNameChange: (name: string) => void
+  onNameEditStart?: () => void
   onPlayerNameChange: (playerIndex: PlayerIndex, name: string) => void
   onSelectService: () => void
   onSelectPlayer: (playerIndex: PlayerIndex) => void
@@ -68,6 +69,7 @@ export function ScoreSide({
   onAddPoint,
   onRemovePoint,
   onNameChange,
+  onNameEditStart = () => undefined,
   onPlayerNameChange,
   onSelectService,
   onSelectPlayer,
@@ -275,6 +277,7 @@ export function ScoreSide({
   return (
     <section
       className={`score-side score-side--${side}${isSelectingService ? ' score-side--selecting-service' : ''}${isServing ? ' score-side--serving' : ''}`}
+      data-tutorial-id={`side-${side}`}
       onClickCapture={handleClickCapture}
       onPointerCancel={handlePointerCancel}
       onPointerDown={handlePointerDown}
@@ -283,6 +286,7 @@ export function ScoreSide({
     >
       <button
         className="score-side__point-target"
+        data-tutorial-id={`score-${side}`}
         type="button"
         aria-label={`Add a point to ${name}`}
         disabled={isReadOnly}
@@ -323,11 +327,17 @@ export function ScoreSide({
                   className="score-side__player-name"
                   type="button"
                   aria-label={`Edit ${playerName} for ${name}`}
+                  data-tutorial-id={
+                    side === 'left' && playerIndex === 0
+                      ? 'name-left'
+                      : undefined
+                  }
                   disabled={isReadOnly || isSelectingService}
                   key={playerIndex}
-                  onClick={() =>
+                  onClick={() => {
                     beginPlayerNameEdit(playerIndex as PlayerIndex)
-                  }
+                    onNameEditStart()
+                  }}
                 >
                   <span>{playerName}</span>
                   {isServing && servingPlayerIndex === playerIndex && (
@@ -358,8 +368,12 @@ export function ScoreSide({
             className="score-side__name score-side__name-button"
             type="button"
             aria-label={name}
+            data-tutorial-id={side === 'left' ? 'name-left' : undefined}
             disabled={isReadOnly}
-            onClick={() => setIsEditingName(true)}
+            onClick={() => {
+              setIsEditingName(true)
+              onNameEditStart()
+            }}
           >
             <span>{name}</span>
             {isServing && showTeamServeIndicator && (
@@ -397,6 +411,7 @@ export function ScoreSide({
           className="score-side__service-target"
           type="button"
           aria-label={`Select ${name} to serve`}
+          data-tutorial-id={`team-service-${side}`}
           onClick={onSelectService}
         />
       )}
@@ -409,6 +424,7 @@ export function ScoreSide({
                 key={playerIndex}
                 type="button"
                 aria-label={`Select ${playerNames[playerIndex]} of ${name}`}
+                data-tutorial-id={`player-choice-${side}-${playerIndex}`}
                 onClick={() => onSelectPlayer(playerIndex)}
               >
                 {playerNames[playerIndex]}

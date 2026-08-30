@@ -23,7 +23,13 @@ export function SetHistoryControl({
   if (selectedSetNumber !== null) {
     return (
       <div className="set-history-control set-history-control--archive">
-        <button className="set-history-control__toggle" type="button" aria-label="Back to live match" onClick={onBack}>
+        <button
+          className="set-history-control__toggle"
+          type="button"
+          aria-label="Back to live match"
+          data-tutorial-id="history-back"
+          onClick={onBack}
+        >
           <ArrowLeft aria-hidden="true" />
         </button>
       </div>
@@ -37,7 +43,12 @@ export function SetHistoryControl({
           {completedSets.map((set) => {
             const winnerName = set.winner === 'left' ? set.leftName : set.rightName
             return (
-              <button key={set.setNumber} type="button" onClick={() => onSelect(set.setNumber)}>
+              <button
+                key={set.setNumber}
+                type="button"
+                data-tutorial-id={`history-set-${set.setNumber}`}
+                onClick={() => onSelect(set.setNumber)}
+              >
                 <span>Set {set.setNumber}</span>
                 <strong>{winnerName}</strong>
                 <span>{set.leftScore} - {set.rightScore}</span>
@@ -48,6 +59,7 @@ export function SetHistoryControl({
       )}
       <button
         className="set-history-control__toggle"
+        data-tutorial-id="history-toggle"
         type="button"
         aria-expanded={isOpen}
         aria-label={isOpen ? 'Close set history' : 'Open set history'}

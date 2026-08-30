@@ -64,6 +64,7 @@ export function ResetMatchDialog({
           <button
             type="button"
             className="dialog-button"
+            data-tutorial-id="reset-cancel"
             autoFocus
             onClick={onCancel}
           >

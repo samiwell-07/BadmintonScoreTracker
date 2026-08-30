@@ -23,6 +23,7 @@ interface MatchSettingsDialogProps {
   onCancel: () => void
   onSave: (settings: MatchSettings) => void
   onSaveGeneralSettings?: (settings: GeneralSettings) => void
+  onStartTutorial?: () => void
 }
 
 interface SettingStepperProps {
@@ -75,6 +76,7 @@ export function MatchSettingsDialog({
   onCancel,
   onSave,
   onSaveGeneralSettings = () => undefined,
+  onStartTutorial,
 }: MatchSettingsDialogProps) {
   const [draft, setDraft] = useState(settings)
   const [generalDraft, setGeneralDraft] = useState(generalSettings)
@@ -263,7 +265,12 @@ export function MatchSettingsDialog({
                 />
               </fieldset>
               <div className="scoreboard-dialog__actions">
-                <button type="button" className="dialog-button" onClick={onCancel}>
+                <button
+                  type="button"
+                  className="dialog-button"
+                  data-tutorial-id="settings-cancel"
+                  onClick={onCancel}
+                >
                   {isLocked ? 'Close' : 'Cancel'}
                 </button>
                 {!isLocked && (
@@ -328,6 +335,15 @@ export function MatchSettingsDialog({
                 <button type="button" className="dialog-button" onClick={onCancel}>
                   Cancel
                 </button>
+                {onStartTutorial && (
+                  <button
+                    type="button"
+                    className="dialog-button"
+                    onClick={onStartTutorial}
+                  >
+                    Tutorial
+                  </button>
+                )}
                 <button
                   type="submit"
                   className="dialog-button dialog-button--primary"

@@ -24,6 +24,17 @@ Open the URL printed by Vite, normally `http://localhost:5173`.
 - Press the half-circle at the top-center divider to open the match controls.
 - Press an outside area, the main circle, or Escape to close the controls.
 
+## Interactive Tutorial
+
+On the first visit, the app offers an interactive tutorial for scoring, swipe gestures, name editing, match tools, doubles service, set history, and result actions.
+
+- Tutorial actions use temporary practice data; your real match is restored exactly afterward.
+- Each interactive step waits for the highlighted action.
+- Use **Back** to repeat the previous practice step.
+- Use **Skip all** from the welcome screen or any step to exit immediately and stop future automatic offers.
+- Replay the tutorial anytime from **Settings → General settings → Tutorial**.
+- Press Escape during a step to confirm whether to keep learning or Skip all.
+
 On devices that support vibration, adding a point gives a very short pulse and completed score swipes give a slightly longer subtle pulse. Open **Settings → General settings** to turn haptic feedback on or off. The choice is remembered in this browser. Unsupported devices continue without haptic feedback.
 
 General settings also controls serving indicators:

@@ -128,6 +128,7 @@ export function CenterControl({
               <button
                 key={action}
                 className={`center-control__item center-control__item--${position}${activeItem === action ? ' center-control__item--active' : ''}`}
+                data-tutorial-id={`center-${action}`}
                 type="button"
                 aria-hidden={!isOpen}
                 aria-label={label}
@@ -145,6 +146,7 @@ export function CenterControl({
         </div>
         <button
           className="center-control__toggle"
+          data-tutorial-id="center-toggle"
           type="button"
           aria-expanded={isOpen}
           aria-label={isOpen ? 'Close center menu' : 'Open center menu'}

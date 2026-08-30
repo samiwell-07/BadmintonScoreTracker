@@ -14,6 +14,7 @@ type ShareStatus =
   | 'idle'
   | 'creating'
   | 'shared'
+  | 'ready'
   | 'downloaded'
   | 'cancelled'
   | 'failed'
@@ -29,6 +30,7 @@ const SHARE_LABELS: Record<ShareStatus, string> = {
   idle: 'Share image',
   creating: 'Creating...',
   shared: 'Shared',
+  ready: 'Image ready',
   downloaded: 'Downloaded',
   cancelled: 'Cancelled',
   failed: 'Share failed',
@@ -43,6 +45,8 @@ interface GameResultDialogProps {
   onNewMatch: () => void
   onNextGame: () => void
   onUndoWinningPoint: () => void
+  onTutorialAction?: (action: 'copy' | 'share') => void
+  tutorialSafeShare?: boolean
 }
 
 export function GameResultDialog({
@@ -54,6 +58,8 @@ export function GameResultDialog({
   onNewMatch,
   onNextGame,
   onUndoWinningPoint,
+  onTutorialAction = () => undefined,
+  tutorialSafeShare = false,
 }: GameResultDialogProps) {
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle')
   const [shareStatus, setShareStatus] = useState<ShareStatus>('idle')
@@ -110,6 +116,7 @@ export function GameResultDialog({
     try {
       await copyResultText(formatResultText(shareData))
       setCopyStatus('copied')
+      onTutorialAction('copy')
     } catch {
       setCopyStatus('failed')
     }
@@ -120,7 +127,12 @@ export function GameResultDialog({
     setShareStatus('creating')
     try {
       const image = await createResultImage(shareData)
-      setShareStatus(await shareResultImage(image, shareData))
+      if (tutorialSafeShare) {
+        setShareStatus('ready')
+      } else {
+        setShareStatus(await shareResultImage(image, shareData))
+      }
+      onTutorialAction('share')
     } catch {
       setShareStatus('failed')
     }
@@ -132,6 +144,7 @@ export function GameResultDialog({
       <div className="scoreboard-dialog__backdrop" />
       <section
         className="scoreboard-dialog scoreboard-dialog--result"
+        data-tutorial-id="game-result-dialog"
         role="alertdialog"
         aria-labelledby="game-result-title"
         aria-modal="true"
@@ -149,6 +162,7 @@ export function GameResultDialog({
           <button
             type="button"
             className="dialog-button dialog-button--share"
+            data-tutorial-id="result-copy"
             disabled={copyStatus === 'copying'}
             onClick={handleCopy}
           >
@@ -158,6 +172,7 @@ export function GameResultDialog({
           <button
             type="button"
             className="dialog-button dialog-button--share"
+            data-tutorial-id="result-share"
             disabled={shareStatus === 'creating'}
             onClick={handleShare}
           >
@@ -166,7 +181,12 @@ export function GameResultDialog({
           </button>
         </div>
         <div className="scoreboard-dialog__actions scoreboard-dialog__actions--result">
-          <button type="button" className="dialog-button" onClick={onUndoWinningPoint}>
+          <button
+            type="button"
+            className="dialog-button"
+            data-tutorial-id="result-undo"
+            onClick={onUndoWinningPoint}
+          >
             Undo winning point
           </button>
           {isMatchWon ? (
@@ -179,7 +199,13 @@ export function GameResultDialog({
               </button>
             </>
           ) : (
-            <button type="button" className="dialog-button dialog-button--primary" autoFocus onClick={onNextGame}>
+            <button
+              type="button"
+              className="dialog-button dialog-button--primary"
+              data-tutorial-id="result-next"
+              autoFocus
+              onClick={onNextGame}
+            >
               Next game
             </button>
           )}
