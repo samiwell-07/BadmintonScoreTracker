@@ -10,7 +10,12 @@ import {
 describe('match state persistence', () => {
   it('round-trips an active match with completed sets', () => {
     const state = createFreshMatchState()
-    state.sides.left = { id: 'left', name: 'Falcons', score: 7 }
+    state.sides.left = {
+      id: 'left',
+      name: 'Falcons',
+      playerNames: ['Alex', 'Blake'],
+      score: 7,
+    }
     state.servingSide = 'left'
     state.activeRules = DEFAULT_MATCH_SETTINGS
     state.completedSets = [
@@ -42,6 +47,21 @@ describe('match state persistence', () => {
     const storage = { getItem: vi.fn(() => '{invalid') }
 
     expect(loadMatchState(storage)).toEqual(createFreshMatchState())
+  })
+
+  it('adds default player names to older saved sides', () => {
+    const legacy = createFreshMatchState()
+    const left = { id: 'left', name: 'Falcons', score: 3 }
+    const right = { id: 'right', name: 'Rockets', score: 2 }
+
+    expect(
+      loadMatchState({
+        getItem: () => JSON.stringify({ ...legacy, sides: { left, right } }),
+      }).sides,
+    ).toEqual({
+      left: { ...left, playerNames: ['Player 1', 'Player 2'] },
+      right: { ...right, playerNames: ['Player 1', 'Player 2'] },
+    })
   })
 
   it('handles unavailable storage', () => {

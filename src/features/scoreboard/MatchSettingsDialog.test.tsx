@@ -60,8 +60,35 @@ describe('match settings', () => {
 
     expect(onSaveGeneralSettings).toHaveBeenCalledWith({
       hapticsEnabled: false,
+      playerServeIndicatorEnabled: false,
+      teamServeIndicatorEnabled: true,
     })
     expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('does not show player-name fields when player indicators are enabled', async () => {
+    const user = userEvent.setup()
+    const onSaveGeneralSettings = vi.fn()
+    render(
+      <MatchSettingsDialog
+        settings={DEFAULT_MATCH_SETTINGS}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        onSaveGeneralSettings={onSaveGeneralSettings}
+      />,
+    )
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Player serve indicator' }),
+    )
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    expect(onSaveGeneralSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ playerServeIndicatorEnabled: true }),
+    )
   })
 
   it('supports arrow, Home, and End keyboard tab selection', async () => {

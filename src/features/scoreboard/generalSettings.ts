@@ -1,9 +1,13 @@
 export interface GeneralSettings {
   hapticsEnabled: boolean
+  playerServeIndicatorEnabled: boolean
+  teamServeIndicatorEnabled: boolean
 }
 
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
   hapticsEnabled: true,
+  playerServeIndicatorEnabled: false,
+  teamServeIndicatorEnabled: true,
 }
 
 export const GENERAL_SETTINGS_STORAGE_KEY =
@@ -20,6 +24,14 @@ export function normalizeGeneralSettings(value: unknown): GeneralSettings {
       typeof candidate.hapticsEnabled === 'boolean'
         ? candidate.hapticsEnabled
         : DEFAULT_GENERAL_SETTINGS.hapticsEnabled,
+    playerServeIndicatorEnabled:
+      typeof candidate.playerServeIndicatorEnabled === 'boolean'
+        ? candidate.playerServeIndicatorEnabled
+        : DEFAULT_GENERAL_SETTINGS.playerServeIndicatorEnabled,
+    teamServeIndicatorEnabled:
+      typeof candidate.teamServeIndicatorEnabled === 'boolean'
+        ? candidate.teamServeIndicatorEnabled
+        : DEFAULT_GENERAL_SETTINGS.teamServeIndicatorEnabled,
   }
 }
 

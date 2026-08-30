@@ -1,8 +1,11 @@
 import { normalizeMatchSettings } from './matchSettings'
 import type {
   CompletedSet,
+  DoublesServiceState,
   MatchPhase,
   MatchState,
+  PlayerIndex,
+  PlayerNames,
   ScoreSideState,
   SideId,
 } from './scoreboard.types'
@@ -12,8 +15,18 @@ export const MATCH_STATE_STORAGE_KEY = 'badminton-score-tracker:match-state:v1'
 export function createFreshMatchState(): MatchState {
   return {
     sides: {
-      left: { id: 'left', name: 'Player / Team 1', score: 0 },
-      right: { id: 'right', name: 'Player / Team 2', score: 0 },
+      left: {
+        id: 'left',
+        name: 'Player / Team 1',
+        playerNames: ['Player 1', 'Player 2'],
+        score: 0,
+      },
+      right: {
+        id: 'right',
+        name: 'Player / Team 2',
+        playerNames: ['Player 1', 'Player 2'],
+        score: 0,
+      },
     },
     servingSide: null,
     completedSets: [],
@@ -21,6 +34,7 @@ export function createFreshMatchState(): MatchState {
     matchWinner: null,
     resultDialogOpen: false,
     activeRules: null,
+    doublesService: null,
   }
 }
 
@@ -30,10 +44,52 @@ const isSideId = (value: unknown): value is SideId =>
 const isPhase = (value: unknown): value is MatchPhase =>
   value === 'playing' || value === 'gameWon' || value === 'matchWon'
 
+const isPlayerIndex = (value: unknown): value is PlayerIndex =>
+  value === 0 || value === 1
+
+function normalizeDoublesService(
+  value: unknown,
+): DoublesServiceState | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const candidate = value as Partial<DoublesServiceState>
+  if (
+    !isPlayerIndex(candidate.leftCourtPlayerIndexes?.left) ||
+    !isPlayerIndex(candidate.leftCourtPlayerIndexes?.right) ||
+    (candidate.servingPlayerIndex !== null &&
+      !isPlayerIndex(candidate.servingPlayerIndex))
+  ) {
+    return null
+  }
+
+  return {
+    leftCourtPlayerIndexes: {
+      left: candidate.leftCourtPlayerIndexes.left,
+      right: candidate.leftCourtPlayerIndexes.right,
+    },
+    servingPlayerIndex: candidate.servingPlayerIndex,
+  }
+}
+
 const normalizeScore = (value: unknown) =>
   typeof value === 'number' && Number.isFinite(value)
     ? Math.max(0, Math.round(value))
     : 0
+
+const normalizePlayerNames = (value: unknown): PlayerNames => {
+  if (!Array.isArray(value)) {
+    return ['Player 1', 'Player 2']
+  }
+
+  return [0, 1].map((index) => {
+    const name = value[index]
+    return typeof name === 'string' && name.trim()
+      ? name.trim().slice(0, 40)
+      : `Player ${index + 1}`
+  }) as PlayerNames
+}
 
 function normalizeSide(value: unknown, id: SideId): ScoreSideState | null {
   if (!value || typeof value !== 'object') {
@@ -48,6 +104,7 @@ function normalizeSide(value: unknown, id: SideId): ScoreSideState | null {
   return {
     id,
     name: side.name.trim().slice(0, 40),
+    playerNames: normalizePlayerNames(side.playerNames),
     score: normalizeScore(side.score),
   }
 }
@@ -83,6 +140,18 @@ function normalizeCompletedSet(value: unknown): CompletedSet | null {
 
   if (typeof record.previousRightScore === 'number') {
     completedSet.previousRightScore = normalizeScore(record.previousRightScore)
+  }
+
+  if ('previousDoublesService' in record) {
+    completedSet.previousDoublesService = normalizeDoublesService(
+      record.previousDoublesService,
+    )
+  }
+
+  if ('previousServingSide' in record) {
+    completedSet.previousServingSide = isSideId(record.previousServingSide)
+      ? record.previousServingSide
+      : null
   }
 
   return completedSet
@@ -133,6 +202,7 @@ export function normalizeMatchState(value: unknown): MatchState {
     activeRules: candidate.activeRules
       ? normalizeMatchSettings(candidate.activeRules)
       : null,
+    doublesService: normalizeDoublesService(candidate.doublesService),
   }
 }
 

@@ -6,7 +6,16 @@ import {
   type PointerEvent,
 } from 'react'
 import { triggerHaptic } from './haptics'
-import type { SideId } from './scoreboard.types'
+import type {
+  PlayerIndex,
+  PlayerNames,
+  SideId,
+} from './scoreboard.types'
+
+interface PlayerSelection {
+  choices: PlayerIndex[]
+  prompt: string
+}
 
 const DRAG_TOLERANCE = 8
 const MIN_SWIPE_DISTANCE = 60
@@ -24,13 +33,21 @@ interface ScoreSideProps {
   isReadOnly?: boolean
   isSelectingService: boolean
   isServing: boolean
+  playerNames: PlayerNames
+  playerSelection?: PlayerSelection | null
+  servingPlayerIndex?: PlayerIndex | null
+  showPlayerServeIndicator: boolean
+  showTeamServeIndicator: boolean
+  showTeamServiceTarget: boolean
   side: SideId
   name: string
   score: number
   onAddPoint: () => void
   onRemovePoint: () => void
   onNameChange: (name: string) => void
+  onPlayerNameChange: (playerIndex: PlayerIndex, name: string) => void
   onSelectService: () => void
+  onSelectPlayer: (playerIndex: PlayerIndex) => void
   onTransferPoint: (destination: SideId) => void
 }
 
@@ -39,19 +56,34 @@ export function ScoreSide({
   isReadOnly = false,
   isSelectingService,
   isServing,
+  playerNames,
+  playerSelection = null,
+  servingPlayerIndex = null,
+  showPlayerServeIndicator,
+  showTeamServeIndicator,
+  showTeamServiceTarget,
   side,
   name,
   score,
   onAddPoint,
   onRemovePoint,
   onNameChange,
+  onPlayerNameChange,
   onSelectService,
+  onSelectPlayer,
   onTransferPoint,
 }: ScoreSideProps) {
   const [isEditingName, setIsEditingName] = useState(false)
   const [draftName, setDraftName] = useState(name)
+  const [editingPlayerIndex, setEditingPlayerIndex] =
+    useState<PlayerIndex | null>(null)
+  const [draftPlayerName, setDraftPlayerName] = useState('')
   const pointerStart = useRef<PointerStart | null>(null)
   const suppressNextClick = useRef(false)
+  const servingPlayerName =
+    showPlayerServeIndicator && servingPlayerIndex !== null
+      ? playerNames[servingPlayerIndex]
+      : null
 
   const suppressFollowingClick = () => {
     suppressNextClick.current = true
@@ -204,6 +236,42 @@ export function ScoreSide({
     }
   }
 
+  const beginPlayerNameEdit = (playerIndex: PlayerIndex) => {
+    if (isReadOnly || isSelectingService) {
+      return
+    }
+
+    setEditingPlayerIndex(playerIndex)
+    setDraftPlayerName(playerNames[playerIndex])
+  }
+
+  const commitPlayerName = () => {
+    if (editingPlayerIndex === null) {
+      return
+    }
+
+    onPlayerNameChange(
+      editingPlayerIndex,
+      draftPlayerName.trim() || `Player ${editingPlayerIndex + 1}`,
+    )
+    setEditingPlayerIndex(null)
+  }
+
+  const handlePlayerNameKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      event.currentTarget.blur()
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      setEditingPlayerIndex(null)
+      setDraftPlayerName('')
+    }
+  }
+
   return (
     <section
       className={`score-side score-side--${side}${isSelectingService ? ' score-side--selecting-service' : ''}${isServing ? ' score-side--serving' : ''}`}
@@ -221,7 +289,58 @@ export function ScoreSide({
         onClick={handleAddPoint}
       />
       <div className="score-side__content">
-        {isEditingName ? (
+        {showPlayerServeIndicator ? (
+          <div
+            className="score-side__players"
+            aria-label={`${name} players`}
+          >
+            {playerNames.map((playerName, playerIndex) =>
+              editingPlayerIndex === playerIndex ? (
+                <span className="score-side__player-row" key={playerIndex}>
+                  <input
+                    className="score-side__player-input"
+                    type="text"
+                    value={draftPlayerName}
+                    aria-label={`Name for ${side} player ${playerIndex + 1}`}
+                    autoFocus
+                    maxLength={40}
+                    onBlur={commitPlayerName}
+                    onChange={(event) =>
+                      setDraftPlayerName(event.target.value)
+                    }
+                    onFocus={(event) => event.currentTarget.select()}
+                    onKeyDown={handlePlayerNameKeyDown}
+                  />
+                  {isServing && servingPlayerIndex === playerIndex && (
+                    <span
+                      className="score-side__service-marker"
+                      aria-hidden="true"
+                    />
+                  )}
+                </span>
+              ) : (
+                <button
+                  className="score-side__player-name"
+                  type="button"
+                  aria-label={`Edit ${playerName} for ${name}`}
+                  disabled={isReadOnly || isSelectingService}
+                  key={playerIndex}
+                  onClick={() =>
+                    beginPlayerNameEdit(playerIndex as PlayerIndex)
+                  }
+                >
+                  <span>{playerName}</span>
+                  {isServing && servingPlayerIndex === playerIndex && (
+                    <span
+                      className="score-side__service-marker"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              ),
+            )}
+          </div>
+        ) : isEditingName ? (
           <input
             className="score-side__name score-side__name-input"
             type="text"
@@ -243,7 +362,7 @@ export function ScoreSide({
             onClick={() => setIsEditingName(true)}
           >
             <span>{name}</span>
-            {isServing && (
+            {isServing && showTeamServeIndicator && (
               <span className="score-side__service-marker" aria-hidden="true" />
             )}
           </button>
@@ -256,16 +375,24 @@ export function ScoreSide({
           {score}
         </output>
       </div>
-      {isServing && (
+      {isServing &&
+        (servingPlayerName ||
+          (!showPlayerServeIndicator && showTeamServeIndicator)) && (
         <span
           className="visually-hidden"
           role="status"
-          aria-label={`${name} is serving`}
+          aria-label={
+            servingPlayerName
+              ? `${servingPlayerName} of ${name} is serving`
+              : `${name} is serving`
+          }
         >
-          {name} is serving
+          {servingPlayerName
+            ? `${servingPlayerName} of ${name} is serving`
+            : `${name} is serving`}
         </span>
       )}
-      {isSelectingService && !isReadOnly && (
+      {isSelectingService && showTeamServiceTarget && !isReadOnly && (
         <button
           className="score-side__service-target"
           type="button"
@@ -273,6 +400,29 @@ export function ScoreSide({
           onClick={onSelectService}
         />
       )}
+      {isSelectingService && playerSelection && !isReadOnly && (
+        <div className="score-side__player-selection">
+          <p>{playerSelection.prompt}</p>
+          <div>
+            {playerSelection.choices.map((playerIndex) => (
+              <button
+                key={playerIndex}
+                type="button"
+                aria-label={`Select ${playerNames[playerIndex]} of ${name}`}
+                onClick={() => onSelectPlayer(playerIndex)}
+              >
+                {playerNames[playerIndex]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {isSelectingService &&
+        !showTeamServiceTarget &&
+        !playerSelection &&
+        !isReadOnly && (
+          <div className="score-side__service-blocker" aria-hidden="true" />
+        )}
     </section>
   )
 }

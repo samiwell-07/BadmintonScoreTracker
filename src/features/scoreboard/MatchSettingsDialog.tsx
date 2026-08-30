@@ -290,9 +290,36 @@ export function MatchSettingsDialog({
                     type="checkbox"
                     checked={generalDraft.hapticsEnabled}
                     onChange={(event) =>
-                      setGeneralDraft({
+                      setGeneralDraft((currentDraft) => ({
+                        ...currentDraft,
                         hapticsEnabled: event.target.checked,
-                      })
+                      }))
+                    }
+                  />
+                </label>
+                <label className="settings-row settings-row--toggle">
+                  <span>Team serve indicator</span>
+                  <input
+                    type="checkbox"
+                    checked={generalDraft.teamServeIndicatorEnabled}
+                    onChange={(event) =>
+                      setGeneralDraft((currentDraft) => ({
+                        ...currentDraft,
+                        teamServeIndicatorEnabled: event.target.checked,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="settings-row settings-row--toggle">
+                  <span>Player serve indicator</span>
+                  <input
+                    type="checkbox"
+                    checked={generalDraft.playerServeIndicatorEnabled}
+                    onChange={(event) =>
+                      setGeneralDraft((currentDraft) => ({
+                        ...currentDraft,
+                        playerServeIndicatorEnabled: event.target.checked,
+                      }))
                     }
                   />
                 </label>

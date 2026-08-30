@@ -26,6 +26,14 @@ Open the URL printed by Vite, normally `http://localhost:5173`.
 
 On devices that support vibration, adding a point gives a very short pulse and completed score swipes give a slightly longer subtle pulse. Open **Settings → General settings** to turn haptic feedback on or off. The choice is remembered in this browser. Unsupported devices continue without haptic feedback.
 
+General settings also controls serving indicators:
+
+- **Team serve indicator** is on by default and shows the yellow dot beside the serving team.
+- **Player serve indicator** is off by default. Enable it to replace each team heading with two large, vertically stacked player names. Press either name to edit it directly; the same yellow dot appears beside the exact serving player.
+- To initialize doubles service, use **Select serving team**, choose each team’s player on the left/odd-score court, then choose the current server. The app tracks later server and court rotations automatically.
+
+In Player mode, results, set history, copied text, and shared images identify each side with both names, such as **Samuel and Alex**.
+
 The four controls, from left to right, are:
 
 - **Swap teams:** Exchanges names, scores, and service between sides.

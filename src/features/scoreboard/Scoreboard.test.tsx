@@ -6,6 +6,17 @@ import { MATCH_SETTINGS_STORAGE_KEY } from './matchSettings'
 import { Scoreboard } from './Scoreboard'
 
 describe('Scoreboard', () => {
+  const usePlayerIndicators = () => {
+    localStorage.setItem(
+      GENERAL_SETTINGS_STORAGE_KEY,
+      JSON.stringify({
+        hapticsEnabled: true,
+        playerServeIndicatorEnabled: true,
+        teamServeIndicatorEnabled: true,
+      }),
+    )
+  }
+
   const useQuickMatchSettings = (gamesToWin = 2) => {
     localStorage.setItem(
       MATCH_SETTINGS_STORAGE_KEY,
@@ -295,6 +306,431 @@ describe('Scoreboard', () => {
     expect(screen.getByRole('status', { name: 'Player / Team 2 is serving' })).toBeInTheDocument()
     expect(screen.getByLabelText('Player / Team 2 score')).toHaveTextContent('0')
     expect(screen.queryByRole('button', { name: /Select .* to serve/ })).not.toBeInTheDocument()
+  })
+
+  it('sets up doubles service and rotates the same yellow player marker', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    expect(screen.getAllByLabelText(/players$/)).toHaveLength(2)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+
+    expect(
+      screen.getByText('Choose the player on the left / odd court'),
+    ).toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Select Player 1 of Player / Team 1',
+      }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Select Player 2 of Player / Team 2',
+      }),
+    )
+
+    expect(screen.getAllByText('Choose the current server')).toHaveLength(2)
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Select Player 2 of Player / Team 1',
+      }),
+    )
+
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+    expect(document.querySelectorAll('.score-side__service-marker')).toHaveLength(1)
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add a point to Player / Team 1' }),
+    )
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add a point to Player / Team 2' }),
+    )
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 2 is serving',
+      }),
+    ).toBeInTheDocument()
+    expect(document.querySelectorAll('.score-side__service-marker')).toHaveLength(1)
+  })
+
+  it('cancels player service setup without changing the existing server', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
+    await user.keyboard('{Escape}')
+
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Choose the player on the left / odd court'))
+      .not.toBeInTheDocument()
+  })
+
+  it('moves player service state with teams when sides swap', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
+
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Swap teams' }))
+
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+    expect(document.querySelector('.score-side--right .score-side__service-marker'))
+      .toBeInTheDocument()
+  })
+
+  it('clears player service on removal and reuses calibrated courts next rally', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
+    const leftButton = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    })
+    const leftPanel = leftButton.closest('section')!
+    setPanelBounds(leftPanel)
+    await user.click(leftButton)
+
+    swipe(leftPanel)
+    fireEvent.click(leftButton)
+    expect(screen.queryByRole('status', { name: /is serving/ })).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add a point to Player / Team 2' }),
+    )
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 2 is serving',
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('restores the exact doubles server after undoing a winning point', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    useQuickMatchSettings()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
+    const leftButton = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    })
+    await user.click(leftButton)
+    await user.click(leftButton)
+
+    await user.click(screen.getByRole('button', { name: 'Undo winning point' }))
+
+    expect(screen.getByLabelText('Player / Team 1 score')).toHaveTextContent('1')
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('saves player rosters and hides all serve indicators when both toggles are off', async () => {
+    const user = userEvent.setup()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Team serve indicator' }),
+    )
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Player serve indicator' }),
+    )
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Player serve indicator' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add a point to Player / Team 1' }),
+    )
+    expect(document.querySelector('.score-side__service-marker')).toBeNull()
+    expect(screen.queryByRole('status', { name: /is serving/ })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Player serve indicator' }),
+    )
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+
+  it('edits player names inline without adding a point and persists them', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    const firstRender = render(<Scoreboard />)
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Edit Player 1 for Player / Team 1',
+      }),
+    )
+    const input = screen.getByRole('textbox', {
+      name: 'Name for left player 1',
+    })
+    await user.clear(input)
+    await user.type(input, 'Alex{Enter}')
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Edit Alex for Player / Team 1',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Player / Team 1 score')).toHaveTextContent('0')
+
+    firstRender.unmount()
+    render(<Scoreboard />)
+    expect(
+      screen.getByRole('button', {
+        name: 'Edit Alex for Player / Team 1',
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('replaces team headings with exactly two large player controls per side', () => {
+    usePlayerIndicators()
+    render(<Scoreboard />)
+
+    expect(
+      screen.queryByRole('button', { name: 'Player / Team 1' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Player / Team 2' }),
+    ).not.toBeInTheDocument()
+    expect(document.querySelectorAll('.score-side__player-name')).toHaveLength(4)
+    expect(document.querySelectorAll('.score-side__name')).toHaveLength(0)
+  })
+
+  it('uses both player names joined by and in completed-set results', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    useQuickMatchSettings()
+    render(<Scoreboard />)
+
+    const renamePlayer = async (
+      buttonName: string,
+      inputName: string,
+      playerName: string,
+    ) => {
+      await user.click(screen.getByRole('button', { name: buttonName }))
+      const input = screen.getByRole('textbox', { name: inputName })
+      await user.clear(input)
+      await user.type(input, `${playerName}{Enter}`)
+    }
+
+    await renamePlayer(
+      'Edit Player 1 for Player / Team 1',
+      'Name for left player 1',
+      'Samuel',
+    )
+    await renamePlayer(
+      'Edit Player 2 for Player / Team 1',
+      'Name for left player 2',
+      'Alex',
+    )
+    const addLeftPoint = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    })
+    await user.click(addLeftPoint)
+    await user.click(addLeftPoint)
+
+    expect(
+      screen.getByRole('alertdialog', { name: 'Samuel and Alex' }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Next game' }))
+    await user.click(screen.getByRole('button', { name: 'Open set history' }))
+    expect(screen.getByRole('button', { name: /Samuel and Alex/ }))
+      .toBeInTheDocument()
+  })
+
+  it('cancels or restores defaults for inline player-name edits', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    const player = screen.getByRole('button', {
+      name: 'Edit Player 2 for Player / Team 2',
+    })
+    await user.click(player)
+    let input = screen.getByRole('textbox', {
+      name: 'Name for right player 2',
+    })
+    await user.clear(input)
+    await user.type(input, 'Temporary{Escape}')
+    expect(
+      screen.getByRole('button', {
+        name: 'Edit Player 2 for Player / Team 2',
+      }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Edit Player 2 for Player / Team 2',
+      }),
+    )
+    input = screen.getByRole('textbox', {
+      name: 'Name for right player 2',
+    })
+    await user.clear(input)
+    await user.tab()
+    expect(
+      screen.getByRole('button', {
+        name: 'Edit Player 2 for Player / Team 2',
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('moves edited player names with their team when swapping sides', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Edit Player 1 for Player / Team 1',
+      }),
+    )
+    const input = screen.getByRole('textbox', {
+      name: 'Name for left player 1',
+    })
+    await user.clear(input)
+    await user.type(input, 'Alex{Enter}')
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Swap teams' }))
+
+    expect(
+      document.querySelector('.score-side--right [aria-label="Edit Alex for Player / Team 1"]'),
+    ).toBeInTheDocument()
+  })
+
+  it('blocks inline player editing during service setup', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Edit Player 1 for Player / Team 1',
+        hidden: true,
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.queryByRole('textbox', { name: 'Name for left player 1' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('restores the correct player marker after player indicators are hidden', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
+
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Player serve indicator' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+    expect(
+      screen.getByRole('status', { name: 'Player / Team 1 is serving' }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add a point to Player / Team 2' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Player serve indicator' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 2 is serving',
+      }),
+    ).toBeInTheDocument()
+    expect(document.querySelectorAll('.score-side__service-marker')).toHaveLength(1)
+  })
+
+  it('requires player service setup again for the next game', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    useQuickMatchSettings()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
+    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
+    const leftButton = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    })
+    await user.click(leftButton)
+    await user.click(leftButton)
+    await user.click(screen.getByRole('button', { name: 'Next game' }))
+
+    expect(screen.queryByRole('status', { name: /is serving/ })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    expect(
+      screen.getByRole('button', {
+        name: 'Select Player 1 of Player / Team 1',
+      }),
+    ).toBeInTheDocument()
   })
 
   it('cancels service selection with Escape and preserves the server', async () => {
@@ -601,7 +1037,11 @@ describe('Scoreboard', () => {
       )
 
       expect(JSON.parse(localStorage.getItem(GENERAL_SETTINGS_STORAGE_KEY)!))
-        .toEqual({ hapticsEnabled: false })
+        .toEqual({
+          hapticsEnabled: false,
+          playerServeIndicatorEnabled: false,
+          teamServeIndicatorEnabled: true,
+        })
 
       const leftButton = screen.getByRole('button', {
         name: 'Add a point to Player / Team 1',
