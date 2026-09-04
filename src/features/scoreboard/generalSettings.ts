@@ -1,11 +1,9 @@
 export interface GeneralSettings {
-  hapticsEnabled: boolean
   playerServeIndicatorEnabled: boolean
   teamServeIndicatorEnabled: boolean
 }
 
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
-  hapticsEnabled: true,
   playerServeIndicatorEnabled: false,
   teamServeIndicatorEnabled: true,
 }
@@ -20,10 +18,6 @@ export function normalizeGeneralSettings(value: unknown): GeneralSettings {
 
   const candidate = value as Partial<GeneralSettings>
   return {
-    hapticsEnabled:
-      typeof candidate.hapticsEnabled === 'boolean'
-        ? candidate.hapticsEnabled
-        : DEFAULT_GENERAL_SETTINGS.hapticsEnabled,
     playerServeIndicatorEnabled:
       typeof candidate.playerServeIndicatorEnabled === 'boolean'
         ? candidate.playerServeIndicatorEnabled

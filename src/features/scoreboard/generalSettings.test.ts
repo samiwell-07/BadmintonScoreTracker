@@ -8,20 +8,14 @@ import {
 } from './generalSettings'
 
 describe('general settings', () => {
-  it('defaults haptic feedback to on', () => {
+  it('defaults serve indicators', () => {
     expect(normalizeGeneralSettings(undefined)).toEqual({
-      hapticsEnabled: true,
-      playerServeIndicatorEnabled: false,
-      teamServeIndicatorEnabled: true,
-    })
-    expect(normalizeGeneralSettings({ hapticsEnabled: false })).toEqual({
-      hapticsEnabled: false,
       playerServeIndicatorEnabled: false,
       teamServeIndicatorEnabled: true,
     })
   })
 
-  it('round-trips the haptic preference through storage', () => {
+  it('round-trips general preferences through storage', () => {
     const values = new Map<string, string>()
     const storage = {
       getItem: vi.fn((key: string) => values.get(key) ?? null),
@@ -29,7 +23,6 @@ describe('general settings', () => {
     }
 
     const settings = {
-      hapticsEnabled: false,
       playerServeIndicatorEnabled: true,
       teamServeIndicatorEnabled: false,
     }

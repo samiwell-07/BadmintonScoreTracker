@@ -292,19 +292,6 @@ export function MatchSettingsDialog({
             >
               <fieldset>
                 <label className="settings-row settings-row--toggle">
-                  <span>Haptic feedback</span>
-                  <input
-                    type="checkbox"
-                    checked={generalDraft.hapticsEnabled}
-                    onChange={(event) =>
-                      setGeneralDraft((currentDraft) => ({
-                        ...currentDraft,
-                        hapticsEnabled: event.target.checked,
-                      }))
-                    }
-                  />
-                </label>
-                <label className="settings-row settings-row--toggle">
                   <span>Team serve indicator</span>
                   <input
                     type="checkbox"

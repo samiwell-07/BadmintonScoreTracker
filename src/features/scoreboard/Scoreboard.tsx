@@ -247,12 +247,34 @@ export function Scoreboard() {
     tutorialSnapshot.current = null
   }
 
+  const resetTutorialViewport = () => {
+    const resetScrollOffsets = () => {
+      const scrollContainers = [
+        document.documentElement,
+        document.body,
+        document.getElementById('root'),
+        document.querySelector<HTMLElement>('.scoreboard'),
+      ]
+
+      scrollContainers.forEach((element) => {
+        if (!element) return
+        element.scrollTop = 0
+        element.scrollLeft = 0
+      })
+      window.scrollTo(0, 0)
+    }
+
+    resetScrollOffsets()
+    window.requestAnimationFrame(resetScrollOffsets)
+  }
+
   const finishTutorial = () => {
     restoreTutorialSnapshot()
     dismissTutorial()
     setTutorialMode(null)
     setTutorialStepIndex(0)
     setIsTutorialExitOpen(false)
+    resetTutorialViewport()
   }
 
   const skipAllTutorial = () => {
@@ -263,6 +285,7 @@ export function Scoreboard() {
     setTutorialMode(null)
     setTutorialStepIndex(0)
     setIsTutorialExitOpen(false)
+    resetTutorialViewport()
   }
 
   const prepareTutorialStep = (stepIndex: number) => {
@@ -376,7 +399,6 @@ export function Scoreboard() {
     setIsTutorialExitOpen(false)
     setGeneralSettings({
       ...generalSettings,
-      hapticsEnabled: false,
       playerServeIndicatorEnabled: false,
       teamServeIndicatorEnabled: true,
     })
@@ -917,7 +939,6 @@ export function Scoreboard() {
       aria-label="Badminton score tracker"
     >
       <ScoreSide
-        hapticsEnabled={generalSettings.hapticsEnabled}
         isReadOnly={isReadOnly}
         isSelectingService={isSelectingService}
         isServing={!isReadOnly && matchState.servingSide === 'left'}
@@ -946,7 +967,6 @@ export function Scoreboard() {
         onTransferPoint={(destination) => transferPoint('left', destination)}
       />
       <ScoreSide
-        hapticsEnabled={generalSettings.hapticsEnabled}
         isReadOnly={isReadOnly}
         isSelectingService={isSelectingService}
         isServing={!isReadOnly && matchState.servingSide === 'right'}

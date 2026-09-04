@@ -86,6 +86,7 @@ const advanceToSwapStep = async () => {
 describe('interactive tutorial', () => {
   beforeEach(() => {
     Element.prototype.scrollIntoView = vi.fn()
+    window.scrollTo = vi.fn()
   })
 
   it('offers once and Skip all prevents another automatic offer', async () => {
@@ -334,5 +335,6 @@ describe('interactive tutorial', () => {
 
     expect(screen.queryByText(/Step \d+ of/)).not.toBeInTheDocument()
     expect(screen.queryByText('Learn the score tracker')).not.toBeInTheDocument()
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0)
   })
 })

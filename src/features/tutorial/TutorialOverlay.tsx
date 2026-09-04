@@ -83,6 +83,11 @@ export function TutorialOverlay({
         }
 
         target.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+        const scoreboard = target.closest<HTMLElement>('.scoreboard')
+        if (scoreboard) {
+          scoreboard.scrollTop = 0
+          scoreboard.scrollLeft = 0
+        }
         const targetBounds = target.getBoundingClientRect()
         const spotlightTarget = step.spotlightTarget
           ? document.querySelector<HTMLElement>(step.spotlightTarget)

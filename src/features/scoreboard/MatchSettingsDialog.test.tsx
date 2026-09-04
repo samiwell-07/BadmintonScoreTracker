@@ -10,7 +10,7 @@ import {
 } from './matchSettings'
 
 describe('match settings', () => {
-  it('opens on Match settings and switches to General haptic settings', async () => {
+  it('opens on Match settings and switches to General settings', async () => {
     const user = userEvent.setup()
     render(
       <MatchSettingsDialog
@@ -31,11 +31,11 @@ describe('match settings', () => {
     expect(matchTab).toHaveAttribute('aria-selected', 'false')
     expect(generalTab).toHaveAttribute('aria-selected', 'true')
     expect(
-      screen.getByRole('checkbox', { name: 'Haptic feedback' }),
+      screen.getByRole('checkbox', { name: 'Team serve indicator' }),
     ).toBeChecked()
   })
 
-  it('saves haptic feedback independently while Match settings are locked', async () => {
+  it('saves general settings independently while Match settings are locked', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
     const onSaveGeneralSettings = vi.fn()
@@ -54,14 +54,13 @@ describe('match settings', () => {
     await user.click(screen.getByRole('tab', { name: 'General settings' }))
 
     await user.click(
-      screen.getByRole('checkbox', { name: 'Haptic feedback' }),
+      screen.getByRole('checkbox', { name: 'Team serve indicator' }),
     )
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
     expect(onSaveGeneralSettings).toHaveBeenCalledWith({
-      hapticsEnabled: false,
       playerServeIndicatorEnabled: false,
-      teamServeIndicatorEnabled: true,
+      teamServeIndicatorEnabled: false,
     })
     expect(onSave).not.toHaveBeenCalled()
   })

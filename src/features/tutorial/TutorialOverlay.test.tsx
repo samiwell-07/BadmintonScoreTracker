@@ -71,6 +71,37 @@ describe('TutorialOverlay', () => {
     })
   })
 
+  it('does not let target focusing scroll the scoreboard', async () => {
+    const scoreboard = document.createElement('main')
+    scoreboard.className = 'scoreboard'
+    const target = document.createElement('button')
+    target.dataset.tutorialId = 'moving-target'
+    target.getBoundingClientRect = () => createRect(100, 100)
+    target.scrollIntoView = vi.fn(() => {
+      scoreboard.scrollTop = 32
+      scoreboard.scrollLeft = 16
+    })
+    scoreboard.append(target)
+    document.body.append(scoreboard)
+
+    render(
+      <TutorialOverlay
+        step={step}
+        stepIndex={10}
+        totalSteps={20}
+        onBack={vi.fn()}
+        onFinish={vi.fn()}
+        onRequestExit={vi.fn()}
+        onSkipAll={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => expect(target.scrollIntoView).toHaveBeenCalled())
+    expect(scoreboard.scrollTop).toBe(0)
+    expect(scoreboard.scrollLeft).toBe(0)
+    scoreboard.remove()
+  })
+
   it('places the hand on a separate cue target without changing the spotlight', async () => {
     Element.prototype.scrollIntoView = vi.fn()
     const target = document.createElement('button')

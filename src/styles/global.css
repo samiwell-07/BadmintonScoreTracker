@@ -1,6 +1,6 @@
 :root {
   color: #171914;
-  background: #f7f3e8;
+  background: linear-gradient(to right, #c8493f 0 50%, #087f75 50% 100%);
   font-family: 'Trebuchet MS', sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,16 +14,24 @@ html,
 body,
 #root {
   min-width: 320px;
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
   margin: 0;
+  overflow: hidden;
+  overflow: clip;
 }
 
 body {
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
 }
 
 button,
 input {
   font: inherit;
+}
+
+button,
+.score-side {
+  -webkit-tap-highlight-color: transparent;
 }

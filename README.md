@@ -35,8 +35,6 @@ On the first visit, the app offers an interactive tutorial for scoring, swipe ge
 - Replay the tutorial anytime from **Settings → General settings → Tutorial**.
 - Press Escape during a step to confirm whether to keep learning or Skip all.
 
-On devices that support vibration, adding a point gives a very short pulse and completed score swipes give a slightly longer subtle pulse. Open **Settings → General settings** to turn haptic feedback on or off. The choice is remembered in this browser. Unsupported devices continue without haptic feedback.
-
 General settings also controls serving indicators:
 
 - **Team serve indicator** is on by default and shows the yellow dot beside the serving team.

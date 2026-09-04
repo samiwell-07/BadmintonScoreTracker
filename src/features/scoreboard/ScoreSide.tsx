@@ -5,7 +5,6 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from 'react'
-import { triggerHaptic } from './haptics'
 import type {
   PlayerIndex,
   PlayerNames,
@@ -29,7 +28,6 @@ interface PointerStart {
 }
 
 interface ScoreSideProps {
-  hapticsEnabled?: boolean
   isReadOnly?: boolean
   isSelectingService: boolean
   isServing: boolean
@@ -53,7 +51,6 @@ interface ScoreSideProps {
 }
 
 export function ScoreSide({
-  hapticsEnabled = true,
   isReadOnly = false,
   isSelectingService,
   isServing,
@@ -167,7 +164,6 @@ export function ScoreSide({
 
     if (isHorizontalTransfer) {
       onTransferPoint(side === 'left' ? 'right' : 'left')
-      triggerHaptic('swipe', hapticsEnabled)
       return
     }
 
@@ -185,14 +181,12 @@ export function ScoreSide({
     ) {
       if (score > 0) {
         onRemovePoint()
-        triggerHaptic('swipe', hapticsEnabled)
       }
     }
   }
 
   const handleAddPoint = () => {
     onAddPoint()
-    triggerHaptic('point', hapticsEnabled)
   }
 
   const handlePointerCancel = () => {
