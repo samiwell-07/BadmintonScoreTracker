@@ -16,22 +16,20 @@ describe('tutorial state', () => {
     expect(expectedTutorialAction(0)).toBe('add-left')
     expect(canAdvanceTutorial(0, 'add-left')).toBe(true)
     expect(canAdvanceTutorial(0, 'add-right')).toBe(false)
-    expect(TUTORIAL_STEPS).toHaveLength(21)
-    expect(TUTORIAL_STEPS.map(({ action }) => action).slice(0, 4)).toEqual([
+    expect(TUTORIAL_STEPS).toHaveLength(12)
+    expect(TUTORIAL_STEPS.map(({ action }) => action)).toEqual([
       'add-left',
       'remove-left',
       'transfer-right-left',
       'edit-name',
-    ])
-    expect(
-      TUTORIAL_STEPS.map(({ action }) => action).slice(8, 14),
-    ).toEqual([
+      'open-menu',
       'service',
       'team-service',
-      'doubles-service',
-      'left-court-player',
-      'right-court-player',
-      'server-player',
+      'open-history',
+      'select-history',
+      'back-history',
+      'next-game',
+      'finish',
     ])
     expect(
       TUTORIAL_STEPS.filter(({ cue }) => cue?.startsWith('swipe')).map(

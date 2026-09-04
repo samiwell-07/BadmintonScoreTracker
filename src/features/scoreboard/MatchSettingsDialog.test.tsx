@@ -31,6 +31,9 @@ describe('match settings', () => {
     expect(matchTab).toHaveAttribute('aria-selected', 'false')
     expect(generalTab).toHaveAttribute('aria-selected', 'true')
     expect(
+      screen.getByRole('checkbox', { name: 'Keep screen awake' }),
+    ).toBeChecked()
+    expect(
       screen.getByRole('checkbox', { name: 'Team serve indicator' }),
     ).toBeChecked()
   })
@@ -59,10 +62,33 @@ describe('match settings', () => {
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
     expect(onSaveGeneralSettings).toHaveBeenCalledWith({
+      keepScreenAwakeEnabled: true,
       playerServeIndicatorEnabled: false,
       teamServeIndicatorEnabled: false,
     })
     expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('saves the screen-awake preference', async () => {
+    const user = userEvent.setup()
+    const onSaveGeneralSettings = vi.fn()
+    render(
+      <MatchSettingsDialog
+        settings={DEFAULT_MATCH_SETTINGS}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        onSaveGeneralSettings={onSaveGeneralSettings}
+      />,
+    )
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Keep screen awake' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    expect(onSaveGeneralSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ keepScreenAwakeEnabled: false }),
+    )
   })
 
   it('does not show player-name fields when player indicators are enabled', async () => {

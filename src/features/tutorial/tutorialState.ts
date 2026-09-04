@@ -6,17 +6,8 @@ export type TutorialAction =
   | 'transfer-left-right'
   | 'edit-name'
   | 'open-menu'
-  | 'swap'
-  | 'reset'
-  | 'cancel-reset'
   | 'service'
   | 'team-service'
-  | 'doubles-service'
-  | 'left-court-player'
-  | 'right-court-player'
-  | 'server-player'
-  | 'settings'
-  | 'close-settings'
   | 'open-history'
   | 'select-history'
   | 'back-history'
@@ -80,28 +71,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: '[data-tutorial-id="center-toggle"]',
   },
   {
-    action: 'swap',
-    cue: 'tap',
-    title: 'Swap sides',
-    description: 'This moves both sides, scores, and service. Try it now.',
-    target: '[data-tutorial-id="center-swap"]',
-  },
-  {
-    action: 'reset',
-    cue: 'tap',
-    title: 'Reset control',
-    description: 'Tap Reset to see its confirmation. Nothing will be erased.',
-    target: '[data-tutorial-id="center-reset"]',
-  },
-  {
-    action: 'cancel-reset',
-    cue: 'tap',
-    title: 'Reset is protected',
-    description: 'Cancel the reset to continue the tutorial.',
-    target: '[data-tutorial-id="reset-cancel"]',
-    panelPosition: 'top',
-  },
-  {
     action: 'service',
     cue: 'tap',
     title: 'One-player service',
@@ -115,49 +84,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Choose the serving side',
     description: 'Tap Left Team to mark it as serving.',
     target: '[data-tutorial-id="team-service-left"]',
-  },
-  {
-    action: 'doubles-service',
-    cue: 'tap',
-    title: 'Two-player service',
-    description: 'Open Service again to assign court positions and the individual server.',
-    target: '[data-tutorial-id="center-service"]',
-  },
-  {
-    action: 'left-court-player',
-    cue: 'tap',
-    title: 'Left team court',
-    description: 'Choose the left team player standing on the left / odd court.',
-    target: '[data-tutorial-id="player-choice-left-0"]',
-  },
-  {
-    action: 'right-court-player',
-    cue: 'tap',
-    title: 'Right team court',
-    description: 'Choose the right team player standing on the left / odd court.',
-    target: '[data-tutorial-id="player-choice-right-0"]',
-  },
-  {
-    action: 'server-player',
-    cue: 'tap',
-    title: 'Current server',
-    description: 'Choose the highlighted eligible player to serve.',
-    target: '[data-tutorial-id="player-choice-left-1"]',
-  },
-  {
-    action: 'settings',
-    cue: 'tap',
-    title: 'Settings',
-    description: 'Tap Settings. The tutorial will only show how to open it.',
-    target: '[data-tutorial-id="center-settings"]',
-  },
-  {
-    action: 'close-settings',
-    cue: 'tap',
-    title: 'Close settings',
-    description: 'Close without changing any practice settings.',
-    target: '[data-tutorial-id="settings-cancel"]',
-    panelPosition: 'top',
   },
   {
     action: 'open-history',

@@ -13,6 +13,10 @@ npm run dev
 
 Open the URL printed by Vite, normally `http://localhost:5173`.
 
+## Offline Use
+
+After one successful online visit, the production site can reload and keep scoring without an internet connection in the same browser. Match data remains stored on the device. Clearing browser data removes both the saved match and offline files.
+
 ## Use the Tracker
 
 - Click or tap either side to add one point to that side.
@@ -26,7 +30,7 @@ Open the URL printed by Vite, normally `http://localhost:5173`.
 
 ## Interactive Tutorial
 
-On the first visit, the app offers an interactive tutorial for scoring, swipe gestures, name editing, match tools, doubles service, set history, and result actions.
+On the first visit, the app offers an interactive tutorial for scoring, swipe gestures, name editing, match tools, service selection, set history, and result actions.
 
 - Tutorial actions use temporary practice data; your real match is restored exactly afterward.
 - Each interactive step waits for the highlighted action.
@@ -37,6 +41,7 @@ On the first visit, the app offers an interactive tutorial for scoring, swipe ge
 
 General settings also controls serving indicators:
 
+- **Keep screen awake** is on by default and prevents supported devices from sleeping while the visible scoreboard is open. Turn it off to reduce battery use.
 - **Team serve indicator** is on by default and shows the yellow dot beside the serving team.
 - **Player serve indicator** is off by default. Enable it to replace each team heading with two large, vertically stacked player names. Press either name to edit it directly; the same yellow dot appears beside the exact serving player.
 - To initialize doubles service, use **Select serving team**, choose each team’s player on the left/odd-score court, then choose the current server. The app tracks later server and court rotations automatically.
@@ -61,6 +66,7 @@ Adding a point moves service to the scoring side. Successfully removing a point 
 - Use **Copy text** to copy a message-ready narrative result without an image or internet connection.
 - Use **Share image** to create a square PNG result card and open the device share sheet. If native image sharing is unavailable, the PNG downloads instead.
 - Reaching the configured games-to-win target completes and freezes the match.
+- After closing the final result, press the **Match complete** message to reopen it and start a new match.
 - Live scores, names, service, and completed sets are remembered across refreshes.
 
 After the first completed set, a half-circle appears at the bottom center. Press it to open the chronological set history. Selecting a set shows its final names and scores on a read-only board; press the back-arrow half-circle to return.

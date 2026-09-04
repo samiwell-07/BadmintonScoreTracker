@@ -1,9 +1,11 @@
 export interface GeneralSettings {
+  keepScreenAwakeEnabled: boolean
   playerServeIndicatorEnabled: boolean
   teamServeIndicatorEnabled: boolean
 }
 
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
+  keepScreenAwakeEnabled: true,
   playerServeIndicatorEnabled: false,
   teamServeIndicatorEnabled: true,
 }
@@ -18,6 +20,10 @@ export function normalizeGeneralSettings(value: unknown): GeneralSettings {
 
   const candidate = value as Partial<GeneralSettings>
   return {
+    keepScreenAwakeEnabled:
+      typeof candidate.keepScreenAwakeEnabled === 'boolean'
+        ? candidate.keepScreenAwakeEnabled
+        : DEFAULT_GENERAL_SETTINGS.keepScreenAwakeEnabled,
     playerServeIndicatorEnabled:
       typeof candidate.playerServeIndicatorEnabled === 'boolean'
         ? candidate.playerServeIndicatorEnabled

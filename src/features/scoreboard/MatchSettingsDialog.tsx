@@ -292,6 +292,19 @@ export function MatchSettingsDialog({
             >
               <fieldset>
                 <label className="settings-row settings-row--toggle">
+                  <span>Keep screen awake</span>
+                  <input
+                    type="checkbox"
+                    checked={generalDraft.keepScreenAwakeEnabled}
+                    onChange={(event) =>
+                      setGeneralDraft((currentDraft) => ({
+                        ...currentDraft,
+                        keepScreenAwakeEnabled: event.target.checked,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="settings-row settings-row--toggle">
                   <span>Team serve indicator</span>
                   <input
                     type="checkbox"

@@ -55,7 +55,7 @@ const swipe = (
   })
 }
 
-const advanceToSwapStep = async () => {
+const advanceToServiceStep = async () => {
   const user = userEvent.setup()
   await user.click(screen.getByRole('button', { name: 'Start tutorial' }))
   await user.click(
@@ -210,10 +210,10 @@ describe('interactive tutorial', () => {
 
   it('keeps the highlighted center action mounted when other controls are pressed', async () => {
     render(<Scoreboard />)
-    const user = await advanceToSwapStep()
+    const user = await advanceToServiceStep()
 
     expect(
-      screen.getByRole('heading', { name: 'Swap sides' }),
+      screen.getByRole('heading', { name: 'One-player service' }),
     ).toBeInTheDocument()
     await user.click(
       screen.getByRole('button', {
@@ -225,13 +225,15 @@ describe('interactive tutorial', () => {
     await user.click(screen.getByRole('button', { name: 'Reset match' }))
 
     expect(
-      screen.getByRole('heading', { name: 'Swap sides' }),
+      screen.getByRole('heading', { name: 'One-player service' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Swap teams' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Select serving team' }),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('alertdialog', { name: 'Reset match?' })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Swap teams' }))
-    expect(screen.getByText('Reset control')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    expect(screen.getByText('Choose the serving side')).toBeInTheDocument()
   })
 
   it('requires and completes the selected production actions in order', async () => {
@@ -278,10 +280,6 @@ describe('interactive tutorial', () => {
 
     await user.click(screen.getByRole('button', { name: 'Left Team' }))
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
-    await user.click(screen.getByRole('button', { name: 'Swap teams' }))
-    await user.click(screen.getByRole('button', { name: 'Reset match' }))
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
-
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
     expect(
       screen.getByRole('heading', { name: 'Choose the serving side' }),
@@ -291,15 +289,8 @@ describe('interactive tutorial', () => {
     ).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Select Left Team to serve' }))
     expect(
-      screen.getByRole('heading', { name: 'Two-player service' }),
+      screen.getByRole('heading', { name: 'Set history' }),
     ).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Alex of Left Team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Casey of Right Team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Blake of Left Team' }))
-
-    await user.click(screen.getByRole('button', { name: 'Match settings' }))
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
     await user.click(screen.getByRole('button', { name: 'Open set history' }))
     const completedSet = screen.getByRole('button', {
       name: /Set 1.*Left Team.*21 - 18/,

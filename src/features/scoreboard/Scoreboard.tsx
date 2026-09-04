@@ -31,6 +31,7 @@ import {
   loadMatchState,
   saveMatchState,
 } from './matchState'
+import { useScreenWakeLock } from './screenWakeLock'
 import type {
   CompletedSet,
   DoublesServiceState,
@@ -210,6 +211,8 @@ export function Scoreboard() {
   const [isTutorialExitOpen, setIsTutorialExitOpen] = useState(false)
   const tutorialSnapshot = useRef<TutorialSnapshot | null>(null)
 
+  useScreenWakeLock(generalSettings.keepScreenAwakeEnabled)
+
   useEffect(() => {
     if (tutorialMode !== 'running') {
       saveMatchState(matchState)
@@ -315,11 +318,6 @@ export function Scoreboard() {
       setMatchState(createTutorialMatch(1, 0))
     } else if (action === 'open-menu') {
       setIsCenterControlOpen(false)
-    } else if (action === 'swap' || action === 'reset') {
-      setIsCenterControlOpen(true)
-    } else if (action === 'cancel-reset') {
-      setIsCenterControlOpen(false)
-      setIsResetDialogOpen(true)
     } else if (action === 'service') {
       closePracticeUi()
       setGeneralSettings((current) => ({
@@ -334,37 +332,6 @@ export function Scoreboard() {
         playerServeIndicatorEnabled: false,
       }))
       setServiceSelection({ mode: 'team' })
-    } else if (action === 'doubles-service') {
-      setGeneralSettings((current) => ({
-        ...current,
-        playerServeIndicatorEnabled: true,
-      }))
-      setServiceSelection(null)
-      setIsCenterControlOpen(true)
-    } else if (action === 'left-court-player') {
-      setServiceSelection({
-        mode: 'leftCourt',
-        side: 'left',
-        leftCourtPlayerIndexes: {},
-      })
-    } else if (action === 'right-court-player') {
-      setServiceSelection({
-        mode: 'leftCourt',
-        side: 'right',
-        leftCourtPlayerIndexes: { left: 0 },
-      })
-    } else if (action === 'server-player') {
-      setServiceSelection({
-        mode: 'server',
-        leftCourtPlayerIndexes: { left: 0, right: 0 },
-      })
-    } else if (action === 'settings') {
-      setServiceSelection(null)
-      setIsSettingsDialogOpen(false)
-      setIsCenterControlOpen(true)
-    } else if (action === 'close-settings') {
-      setIsCenterControlOpen(false)
-      setIsSettingsDialogOpen(true)
     } else if (action === 'open-history') {
       closePracticeUi()
       setMatchState(createTutorialHistoryMatch())
@@ -785,19 +752,8 @@ export function Scoreboard() {
       setIsSettingsDialogOpen(true)
     }
 
-    if (
-      action === 'swap' ||
-      action === 'reset' ||
-      action === 'service' ||
-      action === 'settings'
-    ) {
-      completeTutorialAction(
-        action === 'service' &&
-          tutorialMode === 'running' &&
-          TUTORIAL_STEPS[tutorialStepIndex]?.action === 'doubles-service'
-          ? 'doubles-service'
-          : action,
-      )
+    if (action === 'service') {
+      completeTutorialAction('service')
     }
   }
 
@@ -845,9 +801,6 @@ export function Scoreboard() {
             leftCourtPlayerIndexes as Record<SideId, PlayerIndex>,
         })
       }
-      completeTutorialAction(
-        side === 'left' ? 'left-court-player' : 'right-court-player',
-      )
       return
     }
 
@@ -872,7 +825,6 @@ export function Scoreboard() {
       ),
     }))
     setServiceSelection(null)
-    completeTutorialAction('server-player')
   }
 
   const updateMatchSettings = (settings: MatchSettings) => {
@@ -995,13 +947,19 @@ export function Scoreboard() {
         onTransferPoint={(destination) => transferPoint('right', destination)}
       />
       {matchState.phase === 'matchWon' && !matchState.resultDialogOpen && (
-        <p
+        <button
+          type="button"
           className="scoreboard__match-complete"
-          role="status"
-          aria-label={`Match complete: ${matchWinnerName} wins`}
+          aria-label={`Match complete: ${matchWinnerName} wins. Reopen result`}
+          onClick={() =>
+            setMatchState((current) => ({
+              ...current,
+              resultDialogOpen: true,
+            }))
+          }
         >
           Match complete: {matchWinnerName} wins
-        </p>
+        </button>
       )}
       {!selectedSet && (
         <CenterControl
@@ -1034,7 +992,6 @@ export function Scoreboard() {
           forceResetCompletedSets={matchState.phase === 'matchWon'}
           onCancel={() => {
             setIsResetDialogOpen(false)
-            completeTutorialAction('cancel-reset')
           }}
           onConfirm={resetMatch}
         />
@@ -1046,7 +1003,6 @@ export function Scoreboard() {
           settings={matchSettings}
           onCancel={() => {
             setIsSettingsDialogOpen(false)
-            completeTutorialAction('close-settings')
           }}
           onSave={updateMatchSettings}
           onSaveGeneralSettings={updateGeneralSettings}

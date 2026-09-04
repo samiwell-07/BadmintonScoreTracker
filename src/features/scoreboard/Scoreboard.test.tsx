@@ -173,19 +173,43 @@ describe('Scoreboard', () => {
     expect(screen.getByText('Sets won: 1 - 0')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Close' }))
-    expect(screen.getByRole('status', { name: /Match complete/ })).toBeInTheDocument()
+    const reopenResult = screen.getByRole('button', {
+      name: /Match complete: Player \/ Team 1 wins. Reopen result/,
+    })
+    expect(reopenResult).toBeInTheDocument()
     expect(addLeftPoint).toBeDisabled()
 
-    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
-    await user.click(screen.getByRole('button', { name: 'Reset match' }))
-    const resetSets = screen.getByRole('checkbox', {
-      name: 'Also reset completed sets',
-    })
-    expect(resetSets).toBeChecked()
-    expect(resetSets).toBeDisabled()
-    await user.click(screen.getByRole('button', { name: 'Reset match' }))
+    reopenResult.focus()
+    await user.keyboard('{Enter}')
+    expect(
+      screen.getByRole('alertdialog', { name: 'Player / Team 1' }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'New match' }))
     expect(screen.getByLabelText('Player / Team 1 score')).toHaveTextContent('0')
     expect(screen.queryByRole('button', { name: 'Open set history' })).not.toBeInTheDocument()
+  })
+
+  it('reopens a closed completed-match result after remount', async () => {
+    const user = userEvent.setup()
+    useQuickMatchSettings(1)
+    const firstRender = render(<Scoreboard />)
+    const addLeftPoint = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    })
+    await user.click(addLeftPoint)
+    await user.click(addLeftPoint)
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    firstRender.unmount()
+
+    render(<Scoreboard />)
+    await user.click(
+      screen.getByRole('button', { name: /Match complete.*Reopen result/ }),
+    )
+
+    expect(
+      screen.getByRole('alertdialog', { name: 'Player / Team 1' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New match' })).toBeInTheDocument()
   })
 
   it('restores a pending result dialog after remount', async () => {

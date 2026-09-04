@@ -1081,6 +1081,7 @@
   z-index: 3;
   width: max-content;
   max-width: calc(100% - 2rem);
+  min-height: 2.75rem;
   margin: 0;
   border: 2px solid #20251f;
   border-radius: 6px;
@@ -1090,6 +1091,24 @@
   font-weight: 800;
   text-align: center;
   transform: translateX(-50%);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.scoreboard__match-complete:hover {
+  border-color: #087f75;
+  background: #fffdf7;
+}
+
+.scoreboard__match-complete:active {
+  background: #e4f0ed;
+}
+
+.scoreboard__match-complete:focus-visible {
+  outline: 4px solid #ffd166;
+  outline-offset: 3px;
 }
 
 @media (max-width: 640px) {
