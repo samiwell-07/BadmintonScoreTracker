@@ -136,6 +136,10 @@ describe('interactive tutorial', () => {
     render(<Scoreboard />)
     await user.click(screen.getByRole('button', { name: 'Start tutorial' }))
 
+    expect(
+      screen.queryByRole('button', { name: /Visual service court/ }),
+    ).not.toBeInTheDocument()
+
     await user.click(
       screen.getByRole('button', { name: 'Add a point to Right Team' }),
     )

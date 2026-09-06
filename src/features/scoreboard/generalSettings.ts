@@ -1,10 +1,12 @@
 export interface GeneralSettings {
+  courtVisualizationEnabled: boolean
   keepScreenAwakeEnabled: boolean
   playerServeIndicatorEnabled: boolean
   teamServeIndicatorEnabled: boolean
 }
 
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
+  courtVisualizationEnabled: true,
   keepScreenAwakeEnabled: true,
   playerServeIndicatorEnabled: false,
   teamServeIndicatorEnabled: true,
@@ -20,6 +22,10 @@ export function normalizeGeneralSettings(value: unknown): GeneralSettings {
 
   const candidate = value as Partial<GeneralSettings>
   return {
+    courtVisualizationEnabled:
+      typeof candidate.courtVisualizationEnabled === 'boolean'
+        ? candidate.courtVisualizationEnabled
+        : DEFAULT_GENERAL_SETTINGS.courtVisualizationEnabled,
     keepScreenAwakeEnabled:
       typeof candidate.keepScreenAwakeEnabled === 'boolean'
         ? candidate.keepScreenAwakeEnabled

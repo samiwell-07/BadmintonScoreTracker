@@ -10,6 +10,7 @@ import {
 describe('general settings', () => {
   it('defaults serve indicators', () => {
     expect(normalizeGeneralSettings(undefined)).toEqual({
+      courtVisualizationEnabled: true,
       keepScreenAwakeEnabled: true,
       playerServeIndicatorEnabled: false,
       teamServeIndicatorEnabled: true,
@@ -20,6 +21,7 @@ describe('general settings', () => {
         teamServeIndicatorEnabled: false,
       }),
     ).toEqual({
+      courtVisualizationEnabled: true,
       keepScreenAwakeEnabled: true,
       playerServeIndicatorEnabled: true,
       teamServeIndicatorEnabled: false,
@@ -34,6 +36,7 @@ describe('general settings', () => {
     }
 
     const settings = {
+      courtVisualizationEnabled: false,
       keepScreenAwakeEnabled: false,
       playerServeIndicatorEnabled: true,
       teamServeIndicatorEnabled: false,

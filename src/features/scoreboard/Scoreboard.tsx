@@ -7,12 +7,15 @@ import { GameResultDialog } from './GameResultDialog'
 import { MatchSettingsDialog } from './MatchSettingsDialog'
 import { ResetMatchDialog } from './ResetMatchDialog'
 import { ScoreSide } from './ScoreSide'
+import { ServiceCourt } from './ServiceCourt'
 import { SetHistoryControl } from './SetHistoryControl'
 import {
   applyDoublesRally,
+  assignDoublesServer,
   createDoublesServiceState,
   getPlayerForScore,
   setDoublesServer,
+  swapDoublesTeamPositions,
 } from './doublesService'
 import { getGameWinner } from './gameRules'
 import {
@@ -31,6 +34,7 @@ import {
   loadMatchState,
   saveMatchState,
 } from './matchState'
+import { createCourtViewModel } from './serviceCourtModel'
 import { useScreenWakeLock } from './screenWakeLock'
 import type {
   CompletedSet,
@@ -827,6 +831,43 @@ export function Scoreboard() {
     setServiceSelection(null)
   }
 
+  const swapCourtPlayers = (side: SideId) => {
+    setMatchState((current) => {
+      if (current.phase !== 'playing' || !current.doublesService) {
+        return current
+      }
+
+      return {
+        ...current,
+        doublesService: swapDoublesTeamPositions(
+          current.doublesService,
+          side,
+          current.servingSide,
+          current.sides[side].score,
+        ),
+      }
+    })
+  }
+
+  const assignCourtServer = (side: SideId, playerIndex: PlayerIndex) => {
+    setMatchState((current) => {
+      if (current.phase !== 'playing' || !current.doublesService) {
+        return current
+      }
+
+      return {
+        ...current,
+        servingSide: side,
+        doublesService: assignDoublesServer(
+          current.doublesService,
+          side,
+          playerIndex,
+          current.sides[side].score,
+        ),
+      }
+    })
+  }
+
   const updateMatchSettings = (settings: MatchSettings) => {
     setMatchSettings(settings)
     saveMatchSettings(settings)
@@ -849,6 +890,19 @@ export function Scoreboard() {
   const latestCompletedSet = matchState.completedSets.at(-1)
   const showPlayerMode =
     generalSettings.playerServeIndicatorEnabled && selectedSet === null
+  const showServiceCourt =
+    generalSettings.courtVisualizationEnabled &&
+    (generalSettings.teamServeIndicatorEnabled ||
+      generalSettings.playerServeIndicatorEnabled) &&
+    serviceSelection === null &&
+    selectedSet === null &&
+    tutorialMode !== 'running'
+  const serviceCourtModel = createCourtViewModel({
+    doublesService: matchState.doublesService,
+    playerMode: generalSettings.playerServeIndicatorEnabled,
+    servingSide: matchState.servingSide,
+    sides: matchState.sides,
+  })
   const matchWinnerName = matchState.matchWinner
     ? latestCompletedSet
       ? matchState.matchWinner === 'left'
@@ -946,6 +1000,18 @@ export function Scoreboard() {
         }
         onTransferPoint={(destination) => transferPoint('right', destination)}
       />
+      {showServiceCourt && (
+        <ServiceCourt
+          canEdit={
+            matchState.phase === 'playing' && matchState.doublesService !== null
+          }
+          leftName={matchState.sides.left.name}
+          model={serviceCourtModel}
+          onAssignServer={assignCourtServer}
+          onSwapPlayers={swapCourtPlayers}
+          rightName={matchState.sides.right.name}
+        />
+      )}
       {matchState.phase === 'matchWon' && !matchState.resultDialogOpen && (
         <button
           type="button"

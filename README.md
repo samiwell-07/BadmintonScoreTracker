@@ -13,6 +13,8 @@ npm run dev
 
 Open the URL printed by Vite, normally `http://localhost:5173`.
 
+For local testing only, type `reset1` outside a text field to clear all saved app data and reload with the tutorial welcome. Type `reset2` to clear the same data and reload with the tutorial dismissed. These commands are disabled on non-localhost domains.
+
 ## Offline Use
 
 After one successful online visit, the production site can reload and keep scoring without an internet connection in the same browser. Match data remains stored on the device. Clearing browser data removes both the saved match and offline files.
@@ -44,7 +46,10 @@ General settings also controls serving indicators:
 - **Keep screen awake** is on by default and prevents supported devices from sleeping while the visible scoreboard is open. Turn it off to reduce battery use.
 - **Team serve indicator** is on by default and shows the yellow dot beside the serving team.
 - **Player serve indicator** is off by default. Enable it to replace each team heading with two large, vertically stacked player names. Press either name to edit it directly; the same yellow dot appears beside the exact serving player.
+- **Visual service court** is on by default whenever either serve indicator is enabled. It highlights the active service box in team mode and shows all four positions plus the exact server after player service setup.
 - To initialize doubles service, use **Select serving team**, choose each team’s player on the left/odd-score court, then choose the current server. The app tracks later server and court rotations automatically.
+
+Drag the small court anywhere on the scoreboard; its responsive position is remembered. Press it to open a larger court, then press the close icon, the backdrop, or Escape to return. Arrow keys move the focused mini-court for keyboard users. After doubles positions are initialized, the expanded court lets you swap either team’s players, select any player, and press the shuttlecock to position that player legally and assign service.
 
 In Player mode, results, set history, copied text, and shared images identify each side with both names, such as **Samuel and Alex**.
 
@@ -77,9 +82,13 @@ Match settings lock after the first point and remain locked while completed sets
 
 ```bash
 npm test       # Run component tests once
+npm run test:e2e  # Run browser smoke tests (requires a production build)
 npm run lint   # Check code quality
 npm run build  # Type-check and create a production build
+npm run verify # Run tests, lint, build, and browser smoke tests
 ```
+
+Install the browser used by the smoke tests once with `npx playwright install chromium`.
 
 ## Azure Deployment
 

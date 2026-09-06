@@ -75,3 +75,41 @@ export function setDoublesServer(
     ),
   }
 }
+
+export function swapDoublesTeamPositions(
+  state: DoublesServiceState,
+  side: SideId,
+  servingSide: SideId | null,
+  score: number,
+): DoublesServiceState {
+  const leftCourtPlayerIndexes = {
+    ...state.leftCourtPlayerIndexes,
+    [side]: otherPlayer(state.leftCourtPlayerIndexes[side]),
+  }
+
+  return {
+    leftCourtPlayerIndexes,
+    servingPlayerIndex:
+      servingSide === side
+        ? getPlayerForScore(leftCourtPlayerIndexes[side], score)
+        : state.servingPlayerIndex,
+  }
+}
+
+export function assignDoublesServer(
+  state: DoublesServiceState,
+  side: SideId,
+  playerIndex: PlayerIndex,
+  score: number,
+): DoublesServiceState {
+  const leftCourtPlayerIndex =
+    score % 2 === 1 ? playerIndex : otherPlayer(playerIndex)
+
+  return {
+    leftCourtPlayerIndexes: {
+      ...state.leftCourtPlayerIndexes,
+      [side]: leftCourtPlayerIndex,
+    },
+    servingPlayerIndex: playerIndex,
+  }
+}

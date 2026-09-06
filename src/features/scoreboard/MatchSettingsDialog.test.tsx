@@ -36,6 +36,9 @@ describe('match settings', () => {
     expect(
       screen.getByRole('checkbox', { name: 'Team serve indicator' }),
     ).toBeChecked()
+    expect(
+      screen.getByRole('checkbox', { name: 'Visual service court' }),
+    ).toBeChecked()
   })
 
   it('saves general settings independently while Match settings are locked', async () => {
@@ -62,6 +65,7 @@ describe('match settings', () => {
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
     expect(onSaveGeneralSettings).toHaveBeenCalledWith({
+      courtVisualizationEnabled: true,
       keepScreenAwakeEnabled: true,
       playerServeIndicatorEnabled: false,
       teamServeIndicatorEnabled: false,
@@ -89,6 +93,32 @@ describe('match settings', () => {
     expect(onSaveGeneralSettings).toHaveBeenCalledWith(
       expect.objectContaining({ keepScreenAwakeEnabled: false }),
     )
+  })
+
+  it('hides the visual court option when both serve indicators are off', async () => {
+    const user = userEvent.setup()
+    render(
+      <MatchSettingsDialog
+        settings={DEFAULT_MATCH_SETTINGS}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    )
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Team serve indicator' }),
+    )
+
+    expect(
+      screen.queryByRole('checkbox', { name: 'Visual service court' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Player serve indicator' }),
+    )
+    expect(
+      screen.getByRole('checkbox', { name: 'Visual service court' }),
+    ).toBeChecked()
   })
 
   it('does not show player-name fields when player indicators are enabled', async () => {

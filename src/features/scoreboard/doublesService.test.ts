@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyDoublesRally,
+  assignDoublesServer,
   createDoublesServiceState,
   getPlayerForScore,
   setDoublesServer,
+  swapDoublesTeamPositions,
 } from './doublesService'
 
 describe('doubles service', () => {
@@ -65,5 +67,39 @@ describe('doubles service', () => {
     )
 
     expect(setDoublesServer(state, 'right', 4).servingPlayerIndex).toBe(0)
+  })
+
+  it('swaps only one team and recomputes its active server', () => {
+    const state = createDoublesServiceState(
+      { left: 0, right: 1 },
+      'left',
+      { left: 2, right: 3 },
+    )
+
+    expect(swapDoublesTeamPositions(state, 'left', 'left', 2)).toEqual({
+      leftCourtPlayerIndexes: { left: 1, right: 1 },
+      servingPlayerIndex: 0,
+    })
+    expect(swapDoublesTeamPositions(state, 'right', 'left', 3)).toEqual({
+      leftCourtPlayerIndexes: { left: 0, right: 0 },
+      servingPlayerIndex: 1,
+    })
+  })
+
+  it('auto-positions any selected player in the legal service court', () => {
+    const state = createDoublesServiceState(
+      { left: 0, right: 1 },
+      'left',
+      { left: 0, right: 0 },
+    )
+
+    expect(assignDoublesServer(state, 'left', 0, 2)).toEqual({
+      leftCourtPlayerIndexes: { left: 1, right: 1 },
+      servingPlayerIndex: 0,
+    })
+    expect(assignDoublesServer(state, 'right', 0, 3)).toEqual({
+      leftCourtPlayerIndexes: { left: 0, right: 0 },
+      servingPlayerIndex: 0,
+    })
   })
 })

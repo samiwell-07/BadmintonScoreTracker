@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "pwsh -NoProfile -File ./.github/hooks/verify-after-prompt.ps1",
+        "timeout": 180
+      }
+    ]
+  }
+}

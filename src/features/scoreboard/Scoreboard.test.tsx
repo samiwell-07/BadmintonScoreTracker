@@ -318,6 +318,9 @@ describe('Scoreboard', () => {
   it('selects a serving side without adding a point', async () => {
     const user = userEvent.setup()
     render(<Scoreboard />)
+    expect(
+      screen.getByRole('button', { name: /Visual service court.*No server selected/ }),
+    ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
 
@@ -327,6 +330,11 @@ describe('Scoreboard', () => {
     await user.click(screen.getByRole('button', { name: 'Select Player / Team 2 to serve' }))
 
     expect(screen.getByRole('status', { name: 'Player / Team 2 is serving' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /Visual service court.*Player \/ Team 2 serves from the top court/,
+      }),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Player / Team 2 score')).toHaveTextContent('0')
     expect(screen.queryByRole('button', { name: /Select .* to serve/ })).not.toBeInTheDocument()
   })
@@ -365,6 +373,11 @@ describe('Scoreboard', () => {
         name: 'Player 2 of Player / Team 1 is serving',
       }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /Visual service court.*Player 2 of Player \/ Team 1 is serving from the bottom court/,
+      }),
+    ).toBeInTheDocument()
     expect(document.querySelectorAll('.score-side__service-marker')).toHaveLength(1)
 
     await user.click(
@@ -373,6 +386,11 @@ describe('Scoreboard', () => {
     expect(
       screen.getByRole('status', {
         name: 'Player 2 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /Visual service court.*Player 2 of Player \/ Team 1 is serving from the top court/,
       }),
     ).toBeInTheDocument()
 
@@ -384,7 +402,91 @@ describe('Scoreboard', () => {
         name: 'Player 2 of Player / Team 2 is serving',
       }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /Visual service court.*Player 2 of Player \/ Team 2 is serving from the bottom court/,
+      }),
+    ).toBeInTheDocument()
     expect(document.querySelectorAll('.score-side__service-marker')).toHaveLength(1)
+  })
+
+  it('edits live doubles positions and server from the expanded court', async () => {
+    const user = userEvent.setup()
+    usePlayerIndicators()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Select serving team' }))
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Select Player 1 of Player / Team 1',
+      }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Select Player 2 of Player / Team 2',
+      }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Select Player 2 of Player / Team 1',
+      }),
+    )
+    await user.click(screen.getByRole('button', { name: /Visual service court/ }))
+
+    const leftTop = document.querySelector('.service-court__cell--left-top')!
+    const leftBottom = document.querySelector('.service-court__cell--left-bottom')!
+    expect(leftTop).toHaveTextContent('Player 1')
+    expect(leftBottom).toHaveTextContent('Player 2')
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Swap Player / Team 1 player positions',
+      }),
+    )
+    expect(leftTop).toHaveTextContent('Player 2')
+    expect(leftBottom).toHaveTextContent('Player 1')
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 1 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Select Player 2 of Player / Team 1',
+      }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Make Player 2 of Player / Team 1 serve',
+      }),
+    )
+
+    expect(leftTop).toHaveTextContent('Player 1')
+    expect(leftBottom).toHaveTextContent('Player 2')
+    expect(
+      screen.getByRole('status', {
+        name: 'Player 2 of Player / Team 1 is serving',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Player / Team 1 score')).toHaveTextContent('0')
+    expect(screen.getByLabelText('Player / Team 2 score')).toHaveTextContent('0')
+  })
+
+  it('hides the visual court when both serve indicators are disabled', async () => {
+    const user = userEvent.setup()
+    render(<Scoreboard />)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Team serve indicator' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    expect(
+      screen.queryByRole('button', { name: /Visual service court/ }),
+    ).not.toBeInTheDocument()
   })
 
   it('cancels player service setup without changing the existing server', async () => {
