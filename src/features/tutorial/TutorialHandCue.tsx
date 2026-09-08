@@ -19,7 +19,8 @@ export function TutorialHandCue({
     height: window.innerHeight,
     width: window.innerWidth,
   })
-  const isSwipe = cue !== 'tap'
+  const isMovingCue = cue !== 'tap'
+  const cueClass = isMovingCue ? 'swipe' : 'tap'
   const style = {
     '--tutorial-cue-start-x': `${motion.startX}px`,
     '--tutorial-cue-start-y': `${motion.startY}px`,
@@ -30,12 +31,12 @@ export function TutorialHandCue({
 
   return (
     <div
-      className={`tutorial-hand-cue tutorial-hand-cue--${isSwipe ? 'swipe' : 'tap'}`}
+      className={`tutorial-hand-cue tutorial-hand-cue--${cueClass}`}
       data-cue={cue}
       style={style}
       aria-hidden="true"
     >
-      {isSwipe && (
+      {isMovingCue && (
         <svg
           className="tutorial-hand-cue__trail"
           viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}

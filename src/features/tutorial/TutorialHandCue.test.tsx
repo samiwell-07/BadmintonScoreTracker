@@ -73,4 +73,5 @@ describe('TutorialHandCue', () => {
     expect(cue).toHaveStyle({ pointerEvents: 'none' })
     expect(container.querySelector('.lucide-pointer')).toBeInTheDocument()
   })
+
 })

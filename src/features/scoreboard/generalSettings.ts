@@ -1,14 +1,14 @@
 export interface GeneralSettings {
-  courtVisualizationEnabled: boolean
   keepScreenAwakeEnabled: boolean
   playerServeIndicatorEnabled: boolean
+  raiseBottomHistoryControlEnabled: boolean
   teamServeIndicatorEnabled: boolean
 }
 
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
-  courtVisualizationEnabled: true,
   keepScreenAwakeEnabled: true,
   playerServeIndicatorEnabled: false,
+  raiseBottomHistoryControlEnabled: false,
   teamServeIndicatorEnabled: true,
 }
 
@@ -22,10 +22,6 @@ export function normalizeGeneralSettings(value: unknown): GeneralSettings {
 
   const candidate = value as Partial<GeneralSettings>
   return {
-    courtVisualizationEnabled:
-      typeof candidate.courtVisualizationEnabled === 'boolean'
-        ? candidate.courtVisualizationEnabled
-        : DEFAULT_GENERAL_SETTINGS.courtVisualizationEnabled,
     keepScreenAwakeEnabled:
       typeof candidate.keepScreenAwakeEnabled === 'boolean'
         ? candidate.keepScreenAwakeEnabled
@@ -34,6 +30,10 @@ export function normalizeGeneralSettings(value: unknown): GeneralSettings {
       typeof candidate.playerServeIndicatorEnabled === 'boolean'
         ? candidate.playerServeIndicatorEnabled
         : DEFAULT_GENERAL_SETTINGS.playerServeIndicatorEnabled,
+    raiseBottomHistoryControlEnabled:
+      typeof candidate.raiseBottomHistoryControlEnabled === 'boolean'
+        ? candidate.raiseBottomHistoryControlEnabled
+        : DEFAULT_GENERAL_SETTINGS.raiseBottomHistoryControlEnabled,
     teamServeIndicatorEnabled:
       typeof candidate.teamServeIndicatorEnabled === 'boolean'
         ? candidate.teamServeIndicatorEnabled

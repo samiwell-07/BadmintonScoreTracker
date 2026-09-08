@@ -330,27 +330,21 @@ export function MatchSettingsDialog({
                     }
                   />
                 </label>
-                {(generalDraft.teamServeIndicatorEnabled ||
-                  generalDraft.playerServeIndicatorEnabled) && (
-                  <label className="settings-row settings-row--toggle">
-                    <span>Visual service court</span>
-                    <input
-                      type="checkbox"
-                      checked={generalDraft.courtVisualizationEnabled}
-                      onChange={(event) =>
-                        setGeneralDraft((currentDraft) => ({
-                          ...currentDraft,
-                          courtVisualizationEnabled: event.target.checked,
-                        }))
-                      }
-                    />
-                  </label>
-                )}
+                <label className="settings-row settings-row--toggle">
+                  <span>Raise bottom half circle</span>
+                  <input
+                    type="checkbox"
+                    checked={generalDraft.raiseBottomHistoryControlEnabled}
+                    onChange={(event) =>
+                      setGeneralDraft((currentDraft) => ({
+                        ...currentDraft,
+                        raiseBottomHistoryControlEnabled: event.target.checked,
+                      }))
+                    }
+                  />
+                </label>
               </fieldset>
               <div className="scoreboard-dialog__actions">
-                <button type="button" className="dialog-button" onClick={onCancel}>
-                  Cancel
-                </button>
                 {onStartTutorial && (
                   <button
                     type="button"

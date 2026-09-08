@@ -37,8 +37,8 @@ describe('match settings', () => {
       screen.getByRole('checkbox', { name: 'Team serve indicator' }),
     ).toBeChecked()
     expect(
-      screen.getByRole('checkbox', { name: 'Visual service court' }),
-    ).toBeChecked()
+      screen.getByRole('checkbox', { name: 'Raise bottom half circle' }),
+    ).not.toBeChecked()
   })
 
   it('saves general settings independently while Match settings are locked', async () => {
@@ -65,9 +65,9 @@ describe('match settings', () => {
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
     expect(onSaveGeneralSettings).toHaveBeenCalledWith({
-      courtVisualizationEnabled: true,
       keepScreenAwakeEnabled: true,
       playerServeIndicatorEnabled: false,
+      raiseBottomHistoryControlEnabled: false,
       teamServeIndicatorEnabled: false,
     })
     expect(onSave).not.toHaveBeenCalled()
@@ -95,30 +95,47 @@ describe('match settings', () => {
     )
   })
 
-  it('hides the visual court option when both serve indicators are off', async () => {
+  it('shows Tutorial beside Save without a General Cancel action', async () => {
     const user = userEvent.setup()
+    const onSaveGeneralSettings = vi.fn()
     render(
       <MatchSettingsDialog
         settings={DEFAULT_MATCH_SETTINGS}
         onCancel={vi.fn()}
         onSave={vi.fn()}
+        onSaveGeneralSettings={onSaveGeneralSettings}
+        onStartTutorial={vi.fn()}
+      />,
+    )
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tutorial' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save settings' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+    expect(onSaveGeneralSettings).toHaveBeenCalledOnce()
+  })
+
+  it('saves the raised bottom-circle preference', async () => {
+    const user = userEvent.setup()
+    const onSaveGeneralSettings = vi.fn()
+    render(
+      <MatchSettingsDialog
+        settings={DEFAULT_MATCH_SETTINGS}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        onSaveGeneralSettings={onSaveGeneralSettings}
       />,
     )
     await user.click(screen.getByRole('tab', { name: 'General settings' }))
     await user.click(
-      screen.getByRole('checkbox', { name: 'Team serve indicator' }),
+      screen.getByRole('checkbox', { name: 'Raise bottom half circle' }),
     )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
-    expect(
-      screen.queryByRole('checkbox', { name: 'Visual service court' }),
-    ).not.toBeInTheDocument()
-
-    await user.click(
-      screen.getByRole('checkbox', { name: 'Player serve indicator' }),
+    expect(onSaveGeneralSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ raiseBottomHistoryControlEnabled: true }),
     )
-    expect(
-      screen.getByRole('checkbox', { name: 'Visual service court' }),
-    ).toBeChecked()
   })
 
   it('does not show player-name fields when player indicators are enabled', async () => {

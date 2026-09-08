@@ -891,9 +891,7 @@ export function Scoreboard() {
   const showPlayerMode =
     generalSettings.playerServeIndicatorEnabled && selectedSet === null
   const showServiceCourt =
-    generalSettings.courtVisualizationEnabled &&
-    (generalSettings.teamServeIndicatorEnabled ||
-      generalSettings.playerServeIndicatorEnabled) &&
+    generalSettings.playerServeIndicatorEnabled &&
     serviceSelection === null &&
     selectedSet === null &&
     tutorialMode !== 'running'
@@ -1038,6 +1036,7 @@ export function Scoreboard() {
       <SetHistoryControl
         completedSets={matchState.completedSets}
         isOpen={isHistoryOpen}
+        raiseCircle={generalSettings.raiseBottomHistoryControlEnabled}
         selectedSetNumber={selectedSetNumber}
         onBack={() => {
           setSelectedSetNumber(null)

@@ -976,6 +976,11 @@
   height: var(--history-control-size);
   transform: translate(-50%, 50%);
   pointer-events: none;
+  transition: transform 220ms ease;
+}
+
+.set-history-control--raised {
+  transform: translate(-50%, -50%);
 }
 
 .set-history-control__toggle {
@@ -1011,6 +1016,11 @@
   width: 1.35rem;
   height: 1.35rem;
   transform: translateY(-0.9rem);
+  transition: transform 220ms ease;
+}
+
+.set-history-control--raised .set-history-control__toggle svg {
+  transform: translateY(0);
 }
 
 .set-history-control__list {
@@ -1291,6 +1301,11 @@
 
   .set-history-control__list {
     animation: none;
+  }
+
+  .set-history-control,
+  .set-history-control__toggle svg {
+    transition: none;
   }
 
   .settings-tabs,

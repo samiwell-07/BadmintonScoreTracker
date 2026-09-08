@@ -44,9 +44,9 @@ On the first visit, the app offers an interactive tutorial for scoring, swipe ge
 General settings also controls serving indicators:
 
 - **Keep screen awake** is on by default and prevents supported devices from sleeping while the visible scoreboard is open. Turn it off to reduce battery use.
+- **Raise bottom half circle** is off by default. Enable it to move the set-history and archive-back controls fully above mobile system navigation bars.
 - **Team serve indicator** is on by default and shows the yellow dot beside the serving team.
-- **Player serve indicator** is off by default. Enable it to replace each team heading with two large, vertically stacked player names. Press either name to edit it directly; the same yellow dot appears beside the exact serving player.
-- **Visual service court** is on by default whenever either serve indicator is enabled. It highlights the active service box in team mode and shows all four positions plus the exact server after player service setup.
+- **Player serve indicator** is off by default. Enable it to replace each team heading with two large, vertically stacked player names and automatically show the visual service court. Press either name to edit it directly; the same yellow dot appears beside the exact serving player.
 - To initialize doubles service, use **Select serving team**, choose each team’s player on the left/odd-score court, then choose the current server. The app tracks later server and court rotations automatically.
 
 Drag the small court anywhere on the scoreboard; its responsive position is remembered. Press it to open a larger court, then press the close icon, the backdrop, or Escape to return. Arrow keys move the focused mini-court for keyboard users. After doubles positions are initialized, the expanded court lets you swap either team’s players, select any player, and press the shuttlecock to position that player legally and assign service.

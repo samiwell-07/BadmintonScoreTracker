@@ -319,8 +319,8 @@ describe('Scoreboard', () => {
     const user = userEvent.setup()
     render(<Scoreboard />)
     expect(
-      screen.getByRole('button', { name: /Visual service court.*No server selected/ }),
-    ).toBeInTheDocument()
+      screen.queryByRole('button', { name: /Visual service court/ }),
+    ).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
 
@@ -330,11 +330,8 @@ describe('Scoreboard', () => {
     await user.click(screen.getByRole('button', { name: 'Select Player / Team 2 to serve' }))
 
     expect(screen.getByRole('status', { name: 'Player / Team 2 is serving' })).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', {
-        name: /Visual service court.*Player \/ Team 2 serves from the top court/,
-      }),
-    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Visual service court/ }))
+      .not.toBeInTheDocument()
     expect(screen.getByLabelText('Player / Team 2 score')).toHaveTextContent('0')
     expect(screen.queryByRole('button', { name: /Select .* to serve/ })).not.toBeInTheDocument()
   })
@@ -471,22 +468,6 @@ describe('Scoreboard', () => {
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Player / Team 1 score')).toHaveTextContent('0')
     expect(screen.getByLabelText('Player / Team 2 score')).toHaveTextContent('0')
-  })
-
-  it('hides the visual court when both serve indicators are disabled', async () => {
-    const user = userEvent.setup()
-    render(<Scoreboard />)
-    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
-    await user.click(screen.getByRole('button', { name: 'Match settings' }))
-    await user.click(screen.getByRole('tab', { name: 'General settings' }))
-    await user.click(
-      screen.getByRole('checkbox', { name: 'Team serve indicator' }),
-    )
-    await user.click(screen.getByRole('button', { name: 'Save settings' }))
-
-    expect(
-      screen.queryByRole('button', { name: /Visual service court/ }),
-    ).not.toBeInTheDocument()
   })
 
   it('cancels player service setup without changing the existing server', async () => {
@@ -949,6 +930,44 @@ describe('Scoreboard', () => {
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Match settings' }))
     expect(screen.getByLabelText('Points to win')).toHaveTextContent('20')
+  })
+
+  it('persists the raised history circle across remounts', async () => {
+    const user = userEvent.setup()
+    useQuickMatchSettings()
+    const firstRender = render(<Scoreboard />)
+    const addLeftPoint = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    })
+    await user.click(addLeftPoint)
+    await user.click(addLeftPoint)
+    await user.click(screen.getByRole('button', { name: 'Next game' }))
+    expect(
+      screen.getByRole('button', { name: 'Open set history' }).closest(
+        '.set-history-control',
+      ),
+    ).not.toHaveClass('set-history-control--raised')
+
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+    await user.click(screen.getByRole('tab', { name: 'General settings' }))
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Raise bottom half circle' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+    expect(
+      screen.getByRole('button', { name: 'Open set history' }).closest(
+        '.set-history-control',
+      ),
+    ).toHaveClass('set-history-control--raised')
+
+    firstRender.unmount()
+    render(<Scoreboard />)
+    expect(
+      screen.getByRole('button', { name: 'Open set history' }).closest(
+        '.set-history-control',
+      ),
+    ).toHaveClass('set-history-control--raised')
   })
 
   it('dismisses the center fan without scoring and restores normal controls', async () => {

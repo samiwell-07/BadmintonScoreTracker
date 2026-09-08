@@ -10,9 +10,9 @@ import {
 describe('general settings', () => {
   it('defaults serve indicators', () => {
     expect(normalizeGeneralSettings(undefined)).toEqual({
-      courtVisualizationEnabled: true,
       keepScreenAwakeEnabled: true,
       playerServeIndicatorEnabled: false,
+      raiseBottomHistoryControlEnabled: false,
       teamServeIndicatorEnabled: true,
     })
     expect(
@@ -21,9 +21,9 @@ describe('general settings', () => {
         teamServeIndicatorEnabled: false,
       }),
     ).toEqual({
-      courtVisualizationEnabled: true,
       keepScreenAwakeEnabled: true,
       playerServeIndicatorEnabled: true,
+      raiseBottomHistoryControlEnabled: false,
       teamServeIndicatorEnabled: false,
     })
   })
@@ -36,9 +36,9 @@ describe('general settings', () => {
     }
 
     const settings = {
-      courtVisualizationEnabled: false,
       keepScreenAwakeEnabled: false,
       playerServeIndicatorEnabled: true,
+      raiseBottomHistoryControlEnabled: true,
       teamServeIndicatorEnabled: false,
     }
     expect(saveGeneralSettings(settings, storage)).toBe(true)

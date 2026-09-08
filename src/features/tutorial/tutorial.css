@@ -30,7 +30,7 @@
 .tutorial-welcome h2,
 .tutorial-panel h2 {
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(1.45rem, 6vw, 2rem);
 }
 
@@ -375,13 +375,7 @@
 }
 
 .tutorial-exit h2 {
-  font-family: Georgia, 'Times New Roman', serif;
-}
-
-.tutorial-exit p {
-  margin-top: 0.65rem;
-  color: #555950;
-  line-height: 1.45;
+  font-family: Georgia, "Times New Roman", serif;
 }
 
 .tutorial-exit__actions {
@@ -389,4 +383,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.7rem;
   margin-top: 1.2rem;
+}
+
+.tutorial-exit p {
+  margin-top: 0.65rem;
+  color: #555950;
+  line-height: 1.45;
 }

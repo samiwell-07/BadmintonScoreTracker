@@ -4,6 +4,7 @@ import type { CompletedSet } from './scoreboard.types'
 interface SetHistoryControlProps {
   completedSets: CompletedSet[]
   isOpen: boolean
+  raiseCircle: boolean
   selectedSetNumber: number | null
   onBack: () => void
   onSelect: (setNumber: number) => void
@@ -13,6 +14,7 @@ interface SetHistoryControlProps {
 export function SetHistoryControl({
   completedSets,
   isOpen,
+  raiseCircle,
   selectedSetNumber,
   onBack,
   onSelect,
@@ -22,7 +24,9 @@ export function SetHistoryControl({
 
   if (selectedSetNumber !== null) {
     return (
-      <div className="set-history-control set-history-control--archive">
+      <div
+        className={`set-history-control set-history-control--archive${raiseCircle ? ' set-history-control--raised' : ''}`}
+      >
         <button
           className="set-history-control__toggle"
           type="button"
@@ -37,7 +41,9 @@ export function SetHistoryControl({
   }
 
   return (
-    <div className={`set-history-control${isOpen ? ' set-history-control--open' : ''}`}>
+    <div
+      className={`set-history-control${isOpen ? ' set-history-control--open' : ''}${raiseCircle ? ' set-history-control--raised' : ''}`}
+    >
       {isOpen && (
         <div className="set-history-control__list" aria-label="Completed sets">
           {completedSets.map((set) => {

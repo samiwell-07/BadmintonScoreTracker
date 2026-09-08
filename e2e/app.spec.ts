@@ -32,6 +32,63 @@ const initializeBrowserState = async (
   )
 }
 
+test('publishes installable branding for browsers and home screens', async ({ page }) => {
+  await page.goto('/')
+
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    'href',
+    '/icons/favicon-32.png',
+  )
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    'href',
+    '/icons/apple-touch-icon.png',
+  )
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+    'content',
+    '#087f75',
+  )
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+    'href',
+    '/manifest.webmanifest',
+  )
+
+  const manifestResponse = await page.request.get('/manifest.webmanifest')
+  expect(manifestResponse.ok()).toBe(true)
+  const manifest = (await manifestResponse.json()) as {
+    name: string
+    short_name: string
+    display: string
+    icons: Array<{
+      src: string
+      sizes: string
+      type: string
+      purpose: string
+    }>
+  }
+  expect(manifest).toMatchObject({
+    name: 'Badminton Score Tracker',
+    short_name: 'Badminton',
+    display: 'standalone',
+  })
+  expect(manifest.icons).toEqual([
+    expect.objectContaining({ sizes: '192x192', purpose: 'any' }),
+    expect.objectContaining({ sizes: '512x512', purpose: 'any' }),
+    expect.objectContaining({ sizes: '192x192', purpose: 'maskable' }),
+    expect.objectContaining({ sizes: '512x512', purpose: 'maskable' }),
+  ])
+
+  const iconPaths = [
+    '/icons/favicon-32.png',
+    '/icons/apple-touch-icon.png',
+    ...manifest.icons.map(({ src }) => src),
+  ]
+  for (const iconPath of iconPaths) {
+    const iconResponse = await page.request.get(iconPath)
+    expect(iconResponse.ok()).toBe(true)
+    expect(iconResponse.headers()['content-type']).toContain('image/png')
+  }
+})
+
 test('scores and exercises the main match controls', async ({ page }) => {
   await initializeBrowserState(page, { dismissTutorial: true })
   await page.goto('/')
@@ -65,7 +122,7 @@ test('scores and exercises the main match controls', async ({ page }) => {
   await expect(
     settingsDialog.getByRole('checkbox', { name: 'Keep screen awake' }),
   ).toBeChecked()
-  await settingsDialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await settingsDialog.getByRole('button', { name: 'Save settings' }).click()
 
   await page.getByRole('button', { name: 'Open center menu' }).click()
   await page.getByRole('button', { name: 'Select serving team' }).click()
@@ -118,9 +175,76 @@ test('offers the shortened tutorial', async ({ page }) => {
   await expect(page.getByRole('region', { name: /Tutorial step/ })).toHaveCount(0)
 })
 
+test('raises history and archive controls from General Settings', async ({ page }) => {
+  await initializeBrowserState(page, { dismissTutorial: true, quickMatch: true })
+  await page.setViewportSize({ width: 412, height: 915 })
+  await page.goto('/')
+
+  const scoreLeft = page.getByRole('button', {
+    name: 'Add a point to Player / Team 1',
+  })
+  await scoreLeft.click()
+  await scoreLeft.click()
+  await page.getByRole('button', { name: 'Next game' }).click()
+
+  const history = page.getByRole('button', { name: 'Open set history' })
+  const defaultBounds = await history.boundingBox()
+  expect(defaultBounds).not.toBeNull()
+
+  await page.getByRole('button', { name: 'Open center menu' }).click()
+  await page.getByRole('button', { name: 'Match settings' }).click()
+  const settingsDialog = page.getByRole('dialog', { name: 'Settings' })
+  await settingsDialog.getByRole('tab', { name: 'General settings' }).click()
+  await settingsDialog
+    .getByRole('checkbox', { name: 'Raise bottom half circle' })
+    .check()
+  await settingsDialog.getByRole('button', { name: 'Save settings' }).click()
+
+  await expect.poll(async () => {
+    const bounds = await history.boundingBox()
+    return bounds && defaultBounds
+      ? Math.abs(bounds.y + bounds.height - defaultBounds.y)
+      : Number.POSITIVE_INFINITY
+  }).toBeLessThanOrEqual(1)
+  const raisedBounds = await history.boundingBox()
+  expect(raisedBounds).not.toBeNull()
+
+  await history.click()
+  await page.getByRole('button', { name: /Set 1.*Player \/ Team 1.*2 - 0/ }).click()
+  const archiveBack = page.getByRole('button', { name: 'Back to live match' })
+  const archiveBounds = await archiveBack.boundingBox()
+  expect(archiveBounds).not.toBeNull()
+  expect(archiveBounds!.y).toBeCloseTo(raisedBounds!.y, 0)
+  await archiveBack.click()
+
+  await page.getByRole('button', { name: 'Open center menu' }).click()
+  await page.getByRole('button', { name: 'Match settings' }).click()
+  await page.getByRole('dialog', { name: 'Settings' })
+    .getByRole('tab', { name: 'General settings' }).click()
+  await page.getByRole('dialog', { name: 'Settings' })
+    .getByRole('checkbox', { name: 'Raise bottom half circle' }).uncheck()
+  await page.getByRole('dialog', { name: 'Settings' })
+    .getByRole('button', { name: 'Save settings' }).click()
+  await expect.poll(async () => (await history.boundingBox())?.y ?? 0)
+    .toBeCloseTo(defaultBounds!.y, 0)
+})
+
 test('moves, expands, and updates the visual service court', async ({ page }) => {
   await initializeBrowserState(page, { dismissTutorial: true })
   await page.goto('/')
+
+  await expect(page.getByRole('button', { name: /Visual service court/ })).toHaveCount(0)
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'badminton-score-tracker:general-settings:v1',
+      JSON.stringify({
+        keepScreenAwakeEnabled: false,
+        playerServeIndicatorEnabled: true,
+        teamServeIndicatorEnabled: true,
+      }),
+    )
+  })
+  await page.reload()
 
   let court = page.getByRole('button', {
     name: /Visual service court.*No server selected/,
@@ -168,28 +292,6 @@ test('moves, expands, and updates the visual service court', async ({ page }) =>
   await expect(page.getByRole('dialog', { name: 'Service court' })).toBeVisible()
   await page.getByRole('button', { name: 'Close service court' }).click()
 
-  await page.getByRole('button', { name: 'Open center menu' }).click()
-  await page.getByRole('button', { name: 'Select serving team' }).click()
-  await expect(page.getByRole('button', { name: /Visual service court/ })).toHaveCount(0)
-  await page.getByRole('button', { name: 'Select Player / Team 2 to serve' }).click()
-  await expect(
-    page.getByRole('button', {
-      name: /Visual service court.*Player \/ Team 2 serves from the top court/,
-    }),
-  ).toBeVisible()
-
-  await page.evaluate(() => {
-    localStorage.setItem(
-      'badminton-score-tracker:general-settings:v1',
-      JSON.stringify({
-        courtVisualizationEnabled: true,
-        keepScreenAwakeEnabled: false,
-        playerServeIndicatorEnabled: true,
-        teamServeIndicatorEnabled: true,
-      }),
-    )
-  })
-  await page.reload()
   await page.getByRole('button', { name: 'Open center menu' }).click()
   await page.getByRole('button', { name: 'Select serving team' }).click()
   await page.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }).click()
