@@ -7,6 +7,20 @@ import type {
 export const otherPlayer = (player: PlayerIndex): PlayerIndex =>
   player === 0 ? 1 : 0
 
+export function createRandomDoublesServiceState(
+  random: () => number = Math.random,
+): DoublesServiceState {
+  const randomPlayer = (): PlayerIndex => random() < 0.5 ? 0 : 1
+
+  return {
+    leftCourtPlayerIndexes: {
+      left: randomPlayer(),
+      right: randomPlayer(),
+    },
+    servingPlayerIndex: null,
+  }
+}
+
 export function getPlayerForScore(
   leftCourtPlayerIndex: PlayerIndex,
   score: number,

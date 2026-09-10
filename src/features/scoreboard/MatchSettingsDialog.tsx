@@ -215,7 +215,7 @@ export function MatchSettingsDialog({
             >
               {isLocked && (
                 <p className="scoreboard-dialog__lock-message">
-                  Match settings are locked until current scores and completed sets are reset.
+                  Point settings are locked until current scores and completed sets are reset.
                 </p>
               )}
               <fieldset disabled={isLocked}>
@@ -251,19 +251,19 @@ export function MatchSettingsDialog({
                     }))
                   }
                 />
-                <SettingStepper
-                  label="Games to win"
-                  minimum={1}
-                  maximum={5}
-                  value={draft.gamesToWin}
-                  onChange={(gamesToWin) =>
-                    setDraft((currentDraft) => ({
-                      ...currentDraft,
-                      gamesToWin,
-                    }))
-                  }
-                />
               </fieldset>
+              <SettingStepper
+                label="Games to win"
+                minimum={1}
+                maximum={5}
+                value={draft.gamesToWin}
+                onChange={(gamesToWin) =>
+                  setDraft((currentDraft) => ({
+                    ...currentDraft,
+                    gamesToWin,
+                  }))
+                }
+              />
               <div className="scoreboard-dialog__actions">
                 <button
                   type="button"
@@ -271,16 +271,14 @@ export function MatchSettingsDialog({
                   data-tutorial-id="settings-cancel"
                   onClick={onCancel}
                 >
-                  {isLocked ? 'Close' : 'Cancel'}
+                  Cancel
                 </button>
-                {!isLocked && (
-                  <button
-                    type="submit"
-                    className="dialog-button dialog-button--primary"
-                  >
-                    Save settings
-                  </button>
-                )}
+                <button
+                  type="submit"
+                  className="dialog-button dialog-button--primary"
+                >
+                  Save settings
+                </button>
               </div>
             </div>
           ) : (

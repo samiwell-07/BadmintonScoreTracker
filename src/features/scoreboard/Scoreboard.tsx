@@ -13,6 +13,7 @@ import {
   applyDoublesRally,
   assignDoublesServer,
   createDoublesServiceState,
+  createRandomDoublesServiceState,
   getPlayerForScore,
   setDoublesServer,
   swapDoublesTeamPositions,
@@ -126,11 +127,6 @@ const finalizeScoreChange = (
 type ServiceSelection =
   | { mode: 'team' }
   | {
-      mode: 'leftCourt'
-      side: SideId
-      leftCourtPlayerIndexes: Partial<Record<SideId, PlayerIndex>>
-    }
-  | {
       mode: 'server'
       leftCourtPlayerIndexes: Record<SideId, PlayerIndex>
     }
@@ -197,8 +193,27 @@ const createTutorialResultMatch = (): MatchState => ({
   servingSide: 'left',
 })
 
+const initializeDoublesPositions = (
+  state: MatchState,
+  playerServeIndicatorEnabled: boolean,
+): MatchState =>
+  playerServeIndicatorEnabled &&
+  state.phase === 'playing' &&
+  !state.doublesService
+    ? {
+        ...state,
+        doublesService: createRandomDoublesServiceState(),
+      }
+    : state
+
 export function Scoreboard() {
-  const [matchState, setMatchState] = useState(loadMatchState)
+  const [generalSettings, setGeneralSettings] = useState(loadGeneralSettings)
+  const [matchState, setMatchState] = useState(() =>
+    initializeDoublesPositions(
+      loadMatchState(),
+      generalSettings.playerServeIndicatorEnabled,
+    ),
+  )
   const [isCenterControlOpen, setIsCenterControlOpen] = useState(false)
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
@@ -207,7 +222,6 @@ export function Scoreboard() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [selectedSetNumber, setSelectedSetNumber] = useState<number | null>(null)
   const [matchSettings, setMatchSettings] = useState(loadMatchSettings)
-  const [generalSettings, setGeneralSettings] = useState(loadGeneralSettings)
   const [tutorialMode, setTutorialMode] = useState<TutorialMode>(() =>
     loadTutorialPreference().dismissed ? null : 'offer',
   )
@@ -634,28 +648,32 @@ export function Scoreboard() {
   }
 
   const beginNextGame = () => {
-    setMatchState((current) => ({
-      ...current,
-      sides: {
-        left: { ...current.sides.left, score: 0 },
-        right: { ...current.sides.right, score: 0 },
-      },
-      servingSide: null,
-      doublesService: null,
-      phase: 'playing',
-      matchWinner: null,
-      resultDialogOpen: false,
-    }))
+    setMatchState((current) =>
+      initializeDoublesPositions({
+        ...current,
+        sides: {
+          left: { ...current.sides.left, score: 0 },
+          right: { ...current.sides.right, score: 0 },
+        },
+        servingSide: null,
+        doublesService: null,
+        phase: 'playing',
+        matchWinner: null,
+        resultDialogOpen: false,
+      }, generalSettings.playerServeIndicatorEnabled),
+    )
   }
 
   const startNewMatch = () => {
-    setMatchState((current) => ({
-      ...createFreshMatchState(),
-      sides: {
-        left: { ...current.sides.left, score: 0 },
-        right: { ...current.sides.right, score: 0 },
-      },
-    }))
+    setMatchState((current) =>
+      initializeDoublesPositions({
+        ...createFreshMatchState(),
+        sides: {
+          left: { ...current.sides.left, score: 0 },
+          right: { ...current.sides.right, score: 0 },
+        },
+      }, generalSettings.playerServeIndicatorEnabled),
+    )
     setSelectedSetNumber(null)
     setIsHistoryOpen(false)
   }
@@ -667,20 +685,22 @@ export function Scoreboard() {
     if (mustResetCompletedSets) {
       startNewMatch()
     } else {
-      setMatchState((current) => ({
-        ...current,
-        sides: {
-          left: { ...current.sides.left, score: 0 },
-          right: { ...current.sides.right, score: 0 },
-        },
-        servingSide: null,
-        doublesService: null,
-        phase: 'playing',
-        matchWinner: null,
-        resultDialogOpen: false,
-        activeRules:
-          current.completedSets.length > 0 ? current.activeRules : null,
-      }))
+      setMatchState((current) =>
+        initializeDoublesPositions({
+          ...current,
+          sides: {
+            left: { ...current.sides.left, score: 0 },
+            right: { ...current.sides.right, score: 0 },
+          },
+          servingSide: null,
+          doublesService: null,
+          phase: 'playing',
+          matchWinner: null,
+          resultDialogOpen: false,
+          activeRules:
+            current.completedSets.length > 0 ? current.activeRules : null,
+        }, generalSettings.playerServeIndicatorEnabled),
+      )
       setSelectedSetNumber(null)
     }
 
@@ -740,15 +760,22 @@ export function Scoreboard() {
 
     if (action === 'service' && !isFrozen) {
       setIsCenterControlOpen(false)
-      setServiceSelection(
-        generalSettings.playerServeIndicatorEnabled
-          ? {
-              mode: 'leftCourt',
-              side: 'left',
-              leftCourtPlayerIndexes: {},
-            }
-          : { mode: 'team' },
-      )
+      if (generalSettings.playerServeIndicatorEnabled) {
+        const doublesService =
+          matchState.doublesService ?? createRandomDoublesServiceState()
+        if (!matchState.doublesService) {
+          setMatchState((current) => ({
+            ...current,
+            doublesService,
+          }))
+        }
+        setServiceSelection({
+          mode: 'server',
+          leftCourtPlayerIndexes: doublesService.leftCourtPlayerIndexes,
+        })
+      } else {
+        setServiceSelection({ mode: 'team' })
+      }
     }
 
     if (action === 'settings') {
@@ -783,28 +810,6 @@ export function Scoreboard() {
 
   const selectServicePlayer = (side: SideId, playerIndex: PlayerIndex) => {
     if (!serviceSelection || serviceSelection.mode === 'team') {
-      return
-    }
-
-    if (serviceSelection.mode === 'leftCourt') {
-      const leftCourtPlayerIndexes = {
-        ...serviceSelection.leftCourtPlayerIndexes,
-        [side]: playerIndex,
-      }
-
-      if (side === 'left') {
-        setServiceSelection({
-          mode: 'leftCourt',
-          side: 'right',
-          leftCourtPlayerIndexes,
-        })
-      } else {
-        setServiceSelection({
-          mode: 'server',
-          leftCourtPlayerIndexes:
-            leftCourtPlayerIndexes as Record<SideId, PlayerIndex>,
-        })
-      }
       return
     }
 
@@ -869,13 +874,57 @@ export function Scoreboard() {
   }
 
   const updateMatchSettings = (settings: MatchSettings) => {
-    setMatchSettings(settings)
-    saveMatchSettings(settings)
+    const nextSettings = rulesLocked
+      ? {
+          ...(matchState.activeRules ?? matchSettings),
+          gamesToWin: settings.gamesToWin,
+        }
+      : settings
+
+    setMatchSettings(nextSettings)
+    saveMatchSettings(nextSettings)
+    if (rulesLocked) {
+      setMatchState((current) => {
+        const activeRules = {
+          ...(current.activeRules ?? nextSettings),
+          gamesToWin: nextSettings.gamesToWin,
+        }
+        if (current.phase !== 'playing') {
+          return { ...current, activeRules }
+        }
+
+        const leftWins = countSetWins(current.completedSets, 'left')
+        const rightWins = countSetWins(current.completedSets, 'right')
+        const matchWinner =
+          leftWins > rightWins && leftWins >= activeRules.gamesToWin
+            ? 'left'
+            : rightWins > leftWins && rightWins >= activeRules.gamesToWin
+              ? 'right'
+              : null
+
+        return {
+          ...current,
+          activeRules,
+          ...(matchWinner
+            ? {
+                matchWinner,
+                phase: 'matchWon' as const,
+                resultDialogOpen: true,
+              }
+            : {}),
+        }
+      })
+    }
     setIsSettingsDialogOpen(false)
   }
 
   const updateGeneralSettings = (settings: GeneralSettings) => {
     setGeneralSettings(settings)
+    if (settings.playerServeIndicatorEnabled) {
+      setMatchState((current) =>
+        initializeDoublesPositions(current, true),
+      )
+    }
     saveGeneralSettings(settings)
     setIsSettingsDialogOpen(false)
   }
@@ -915,15 +964,6 @@ export function Scoreboard() {
   const getPlayerSelection = (side: SideId) => {
     if (!serviceSelection || serviceSelection.mode === 'team') {
       return null
-    }
-
-    if (serviceSelection.mode === 'leftCourt') {
-      return serviceSelection.side === side
-        ? {
-            choices: [0, 1] as PlayerIndex[],
-            prompt: 'Choose the player on the left / odd court',
-          }
-        : null
     }
 
     return {
@@ -1065,7 +1105,7 @@ export function Scoreboard() {
         <MatchSettingsDialog
           generalSettings={generalSettings}
           isLocked={rulesLocked}
-          settings={matchSettings}
+          settings={matchState.activeRules ?? matchSettings}
           onCancel={() => {
             setIsSettingsDialogOpen(false)
           }}
@@ -1079,6 +1119,7 @@ export function Scoreboard() {
         matchState.resultDialogOpen && (
           <GameResultDialog
             completedSet={latestCompletedSet}
+            completedSets={matchState.completedSets}
             leftSetsWon={countSetWins(matchState.completedSets, 'left')}
             phase={matchState.phase}
             rightSetsWon={countSetWins(matchState.completedSets, 'right')}

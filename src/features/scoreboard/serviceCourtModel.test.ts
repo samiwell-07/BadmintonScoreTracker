@@ -2,12 +2,17 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   DEFAULT_COURT_POSITION,
   SERVICE_COURT_POSITION_STORAGE_KEY,
+  SERVICE_COURT_WIDTH_STORAGE_KEY,
   clampCourtPosition,
+  clampCourtWidth,
   createCourtViewModel,
   getServiceCourtRow,
   getServeFlight,
   loadCourtPosition,
+  loadCourtWidth,
   saveCourtPosition,
+  saveCourtWidth,
+  snapCourtPosition,
 } from './serviceCourtModel'
 import type { ScoreSideState } from './scoreboard.types'
 
@@ -126,5 +131,54 @@ describe('service court model', () => {
         { width: 120, height: 60 },
       ),
     ).toEqual({ x: 0.83, y: 0.0475 })
+  })
+
+  it('loads, saves, and clamps the persisted court width', () => {
+    const values = new Map<string, string>()
+    const storage = {
+      getItem: vi.fn((key: string) => values.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => values.set(key, value)),
+    }
+
+    expect(loadCourtWidth(390, storage)).toBe(120)
+    expect(saveCourtWidth(280, storage)).toBe(true)
+    expect(storage.setItem).toHaveBeenCalledWith(
+      SERVICE_COURT_WIDTH_STORAGE_KEY,
+      '280',
+    )
+    expect(loadCourtWidth(390, storage)).toBe(280)
+    expect(clampCourtWidth(40, 390)).toBe(80)
+    expect(clampCourtWidth(500, 390)).toBe(374)
+    expect(clampCourtWidth(80, 70)).toBe(54)
+  })
+
+  it.each([
+    [{ x: 0.18, y: 0.06 }, { x: 0.17, y: 0.0475 }],
+    [{ x: 0.82, y: 0.06 }, { x: 0.83, y: 0.0475 }],
+    [{ x: 0.18, y: 0.94 }, { x: 0.17, y: 0.9525 }],
+    [{ x: 0.82, y: 0.94 }, { x: 0.83, y: 0.9525 }],
+  ])('snaps near each corner using live court bounds', (position, expected) => {
+    expect(snapCourtPosition(
+      position,
+      { width: 400, height: 800 },
+      { width: 120, height: 60 },
+    )).toEqual(expected)
+  })
+
+  it('snaps only the horizontal coordinate near the middle line', () => {
+    expect(
+      snapCourtPosition(
+        { x: 0.55, y: 0.7 },
+        { width: 400, height: 800 },
+        { width: 120, height: 60 },
+      ),
+    ).toEqual({ x: 0.5, y: 0.7 })
+    expect(
+      snapCourtPosition(
+        { x: 0.6, y: 0.7 },
+        { width: 400, height: 800 },
+        { width: 120, height: 60 },
+      ),
+    ).toEqual({ x: 0.6, y: 0.7 })
   })
 })

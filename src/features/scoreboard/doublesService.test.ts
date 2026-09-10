@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyDoublesRally,
   assignDoublesServer,
+  createRandomDoublesServiceState,
   createDoublesServiceState,
   getPlayerForScore,
   setDoublesServer,
@@ -9,6 +10,15 @@ import {
 } from './doublesService'
 
 describe('doubles service', () => {
+  it('randomly positions both teams without selecting a server', () => {
+    const values = [0.1, 0.9]
+
+    expect(createRandomDoublesServiceState(() => values.shift()!)).toEqual({
+      leftCourtPlayerIndexes: { left: 0, right: 1 },
+      servingPlayerIndex: null,
+    })
+  })
+
   it('selects the left court player for odd scores and the other for even', () => {
     expect(getPlayerForScore(0, 1)).toBe(0)
     expect(getPlayerForScore(0, 2)).toBe(1)

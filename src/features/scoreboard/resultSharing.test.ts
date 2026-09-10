@@ -38,6 +38,22 @@ const GAME_RESULT: ResultShareData = {
       gamesToWin: 2,
     },
   },
+  completedSets: [
+    {
+      setNumber: 1,
+      leftName: 'Falcons',
+      rightName: 'Rockets',
+      leftScore: 21,
+      rightScore: 18,
+      winner: 'left',
+      rules: {
+        pointsToWin: 21,
+        winByTwo: true,
+        maximumScore: 30,
+        gamesToWin: 2,
+      },
+    },
+  ],
   leftSetsWon: 1,
   phase: 'gameWon',
   rightSetsWon: 1,
@@ -127,9 +143,23 @@ describe('result sharing', () => {
       },
     )
 
-    const blob = await createResultImage(GAME_RESULT)
+    const completedSets = Array.from({ length: 9 }, (_, index) => ({
+      ...GAME_RESULT.completedSet,
+      setNumber: index + 1,
+      leftScore: 21,
+      rightScore: 10 + index,
+    }))
+    const blob = await createResultImage({ ...GAME_RESULT, completedSets })
 
     expect(blob.type).toBe('image/png')
+    completedSets.forEach((set) => {
+      expect(context.fillText).toHaveBeenCalledWith(
+        `Set ${set.setNumber}: ${set.leftScore} - ${set.rightScore}`,
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Number),
+      )
+    })
   })
 
   it('uses native file sharing when supported', async () => {

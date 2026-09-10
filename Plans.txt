@@ -1,1 +1,0 @@
-i want this feature only to be only in local host . the app is normal but if i write whit my keyboard reset1 it will be like if it is the first time using the app so its reset setting , team name and put the tutorial . but if i write reset2 it will do the same thing but wont put the tutorial .

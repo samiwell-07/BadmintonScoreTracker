@@ -44,6 +44,7 @@ describe('GameResultDialog sharing', () => {
       <GameResultDialog
         {...callbacks}
         completedSet={completedSet}
+        completedSets={[completedSet]}
         leftSetsWon={1}
         phase="gameWon"
         rightSetsWon={0}
@@ -69,6 +70,7 @@ describe('GameResultDialog sharing', () => {
       <GameResultDialog
         {...callbacks}
         completedSet={completedSet}
+        completedSets={[completedSet]}
         leftSetsWon={1}
         phase="gameWon"
         rightSetsWon={0}
@@ -101,6 +103,7 @@ describe('GameResultDialog sharing', () => {
       <GameResultDialog
         {...callbacks}
         completedSet={completedSet}
+        completedSets={[completedSet]}
         leftSetsWon={2}
         phase="matchWon"
         rightSetsWon={1}
@@ -112,7 +115,10 @@ describe('GameResultDialog sharing', () => {
     await act(async () => Promise.resolve())
 
     expect(sharingMocks.createResultImage).toHaveBeenCalledWith(
-      expect.objectContaining({ phase: 'matchWon' }),
+      expect.objectContaining({
+        completedSets: [completedSet],
+        phase: 'matchWon',
+      }),
     )
     expect(sharingMocks.shareResultImage).toHaveBeenCalledWith(
       blob,

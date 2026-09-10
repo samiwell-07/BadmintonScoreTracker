@@ -256,8 +256,6 @@
   pointer-events: none;
 }
 
-.service-court__swap:hover .service-court__tooltip,
-.service-court__swap:focus-visible .service-court__tooltip,
 .service-court-dialog__serve:hover .service-court__tooltip,
 .service-court-dialog__serve:focus-visible .service-court__tooltip {
   visibility: visible;

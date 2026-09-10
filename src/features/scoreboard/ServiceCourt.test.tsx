@@ -30,7 +30,7 @@ const model = createCourtViewModel({
 const playerModel = createCourtViewModel({
   doublesService: {
     leftCourtPlayerIndexes: { left: 0, right: 1 },
-    servingPlayerIndex: 1,
+    servingPlayerIndex: 0,
   },
   playerMode: true,
   servingSide: 'right',
@@ -123,6 +123,138 @@ describe('ServiceCourt', () => {
       .not.toBeNull()
   })
 
+  it('pinches to resize without opening and persists the width', () => {
+    renderCourt()
+    const miniCourt = screen.getByRole('button', {
+      name: /Visual service court/,
+    })
+
+    fireEvent.pointerDown(miniCourt, {
+      clientX: 100,
+      clientY: 100,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerDown(miniCourt, {
+      clientX: 200,
+      clientY: 100,
+      isPrimary: false,
+      pointerId: 2,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerMove(miniCourt, {
+      clientX: 300,
+      clientY: 100,
+      isPrimary: false,
+      pointerId: 2,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerUp(miniCourt, {
+      clientX: 300,
+      clientY: 100,
+      isPrimary: false,
+      pointerId: 2,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerUp(miniCourt, {
+      clientX: 100,
+      clientY: 100,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    })
+
+    expect(miniCourt).toHaveStyle({ width: '288px' })
+    expect(
+      localStorage.getItem('badminton-score-tracker:service-court-width:v1'),
+    ).toBe('288')
+
+    fireEvent.pointerDown(miniCourt, {
+      clientX: 50,
+      clientY: 100,
+      isPrimary: true,
+      pointerId: 3,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerDown(miniCourt, {
+      clientX: 250,
+      clientY: 100,
+      isPrimary: false,
+      pointerId: 4,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerMove(miniCourt, {
+      clientX: 150,
+      clientY: 100,
+      isPrimary: false,
+      pointerId: 4,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerUp(miniCourt, {
+      clientX: 150,
+      clientY: 100,
+      isPrimary: false,
+      pointerId: 4,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerUp(miniCourt, {
+      clientX: 50,
+      clientY: 100,
+      isPrimary: true,
+      pointerId: 3,
+      pointerType: 'touch',
+    })
+    fireEvent.click(miniCourt)
+
+    expect(miniCourt).toHaveStyle({ width: '144px' })
+    expect(
+      localStorage.getItem('badminton-score-tracker:service-court-width:v1'),
+    ).toBe('144')
+    expect(screen.queryByRole('dialog', { name: 'Service court' }))
+      .not.toBeInTheDocument()
+  })
+
+  it('snaps a completed drag to the middle line', () => {
+    localStorage.setItem(
+      'badminton-score-tracker:service-court-position:v1',
+      JSON.stringify({ x: 0.3, y: 0.3 }),
+    )
+    renderCourt()
+    const miniCourt = screen.getByRole('button', {
+      name: /Visual service court/,
+    })
+    miniCourt.getBoundingClientRect = () =>
+      ({ height: 70, width: 144 }) as DOMRect
+
+    fireEvent.pointerDown(miniCourt, {
+      button: 0,
+      clientX: 307,
+      clientY: 230,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerMove(miniCourt, {
+      clientX: 512,
+      clientY: 230,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerUp(miniCourt, {
+      clientX: 512,
+      clientY: 230,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'touch',
+    })
+
+    expect(JSON.parse(localStorage.getItem(
+      'badminton-score-tracker:service-court-position:v1',
+    )!)).toEqual({ x: 0.5, y: 0.3 })
+  })
+
   it('moves with arrow keys and opens with Enter', async () => {
     const user = userEvent.setup()
     renderCourt()
@@ -151,6 +283,11 @@ describe('ServiceCourt', () => {
       onSwapPlayers,
     })
     await user.click(screen.getByRole('button', { name: /Visual service court/ }))
+
+    expect(
+      document.querySelector('.service-court__serve-path'),
+    ).toHaveAttribute('data-flight', '75-25-25-75')
+    expect(screen.queryByText('Swap positions')).not.toBeInTheDocument()
 
     const shuttleButton = screen.getByRole('button', {
       name: 'Select a player to serve',

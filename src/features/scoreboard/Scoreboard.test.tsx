@@ -1,12 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GENERAL_SETTINGS_STORAGE_KEY } from './generalSettings'
 import { MATCH_SETTINGS_STORAGE_KEY } from './matchSettings'
 import { Scoreboard } from './Scoreboard'
 
 describe('Scoreboard', () => {
   const usePlayerIndicators = () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.1)
     localStorage.setItem(
       GENERAL_SETTINGS_STORAGE_KEY,
       JSON.stringify({
@@ -15,6 +16,10 @@ describe('Scoreboard', () => {
       }),
     )
   }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
   const useQuickMatchSettings = (gamesToWin = 2) => {
     localStorage.setItem(
@@ -341,22 +346,15 @@ describe('Scoreboard', () => {
     usePlayerIndicators()
     render(<Scoreboard />)
     expect(screen.getAllByLabelText(/players$/)).toHaveLength(2)
+    expect(
+      await screen.findByRole('button', {
+        name: /Visual service court.*No server selected/,
+      }),
+    ).toHaveTextContent('Player 1')
+    expect(screen.getByRole('button', { name: /Visual service court/ }))
+      .toHaveTextContent('Player 2')
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-
-    expect(
-      screen.getByText('Choose the player on the left / odd court'),
-    ).toBeInTheDocument()
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Select Player 1 of Player / Team 1',
-      }),
-    )
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Select Player 2 of Player / Team 2',
-      }),
-    )
 
     expect(screen.getAllByText('Choose the current server')).toHaveLength(2)
     await user.click(
@@ -396,12 +394,12 @@ describe('Scoreboard', () => {
     )
     expect(
       screen.getByRole('status', {
-        name: 'Player 2 of Player / Team 2 is serving',
+        name: 'Player 1 of Player / Team 2 is serving',
       }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', {
-        name: /Visual service court.*Player 2 of Player \/ Team 2 is serving from the bottom court/,
+        name: /Visual service court.*Player 1 of Player \/ Team 2 is serving from the bottom court/,
       }),
     ).toBeInTheDocument()
     expect(document.querySelectorAll('.score-side__service-marker')).toHaveLength(1)
@@ -413,16 +411,6 @@ describe('Scoreboard', () => {
     render(<Scoreboard />)
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Select Player 1 of Player / Team 1',
-      }),
-    )
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Select Player 2 of Player / Team 2',
-      }),
-    )
     await user.click(
       screen.getByRole('button', {
         name: 'Select Player 2 of Player / Team 1',
@@ -476,8 +464,6 @@ describe('Scoreboard', () => {
     render(<Scoreboard />)
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
     await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
     expect(
       screen.getByRole('status', {
@@ -505,8 +491,6 @@ describe('Scoreboard', () => {
     render(<Scoreboard />)
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
     await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
 
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
@@ -527,8 +511,6 @@ describe('Scoreboard', () => {
     render(<Scoreboard />)
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
     await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
     const leftButton = screen.getByRole('button', {
       name: 'Add a point to Player / Team 1',
@@ -546,7 +528,7 @@ describe('Scoreboard', () => {
     )
     expect(
       screen.getByRole('status', {
-        name: 'Player 2 of Player / Team 2 is serving',
+        name: 'Player 1 of Player / Team 2 is serving',
       }),
     ).toBeInTheDocument()
   })
@@ -558,8 +540,6 @@ describe('Scoreboard', () => {
     render(<Scoreboard />)
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
     await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
     const leftButton = screen.getByRole('button', {
       name: 'Add a point to Player / Team 1',
@@ -778,8 +758,6 @@ describe('Scoreboard', () => {
     render(<Scoreboard />)
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
     await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
 
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
@@ -806,7 +784,7 @@ describe('Scoreboard', () => {
 
     expect(
       screen.getByRole('status', {
-        name: 'Player 2 of Player / Team 2 is serving',
+        name: 'Player 1 of Player / Team 2 is serving',
       }),
     ).toBeInTheDocument()
     expect(document.querySelectorAll('.score-side__service-marker')).toHaveLength(1)
@@ -819,8 +797,6 @@ describe('Scoreboard', () => {
     render(<Scoreboard />)
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }))
-    await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }))
     await user.click(screen.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }))
     const leftButton = screen.getByRole('button', {
       name: 'Add a point to Player / Team 1',
@@ -834,7 +810,7 @@ describe('Scoreboard', () => {
     await user.click(screen.getByRole('button', { name: 'Select serving team' }))
     expect(
       screen.getByRole('button', {
-        name: 'Select Player 1 of Player / Team 1',
+        name: 'Select Player 2 of Player / Team 1',
       }),
     ).toBeInTheDocument()
   })
@@ -930,6 +906,94 @@ describe('Scoreboard', () => {
     await user.click(screen.getByRole('button', { name: 'Open center menu' }))
     await user.click(screen.getByRole('button', { name: 'Match settings' }))
     expect(screen.getByLabelText('Points to win')).toHaveTextContent('20')
+  })
+
+  it('raises Games to win during a set and extends the active match', async () => {
+    const user = userEvent.setup()
+    useQuickMatchSettings(1)
+    render(<Scoreboard />)
+    const addLeftPoint = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    })
+
+    await user.click(addLeftPoint)
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Increase points to win' }),
+    ).toBeDisabled()
+    await user.click(
+      screen.getByRole('button', { name: 'Increase games to win' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+    await user.click(addLeftPoint)
+
+    expect(screen.getByRole('button', { name: 'Next game' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'New match' }))
+      .not.toBeInTheDocument()
+  })
+
+  it('ends the match when a lowered target is already met', async () => {
+    const user = userEvent.setup()
+    useQuickMatchSettings(3)
+    render(<Scoreboard />)
+    const addRightPoint = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 2',
+    })
+
+    await user.click(addRightPoint)
+    await user.click(addRightPoint)
+    await user.click(screen.getByRole('button', { name: 'Next game' }))
+    await user.click(screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    }))
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Decrease games to win' }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Decrease games to win' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    expect(screen.getByText('Match winner')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Player / Team 2' }))
+      .toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New match' })).toBeInTheDocument()
+  })
+
+  it('continues a tied match when both sides meet the lowered target', async () => {
+    const user = userEvent.setup()
+    useQuickMatchSettings(3)
+    render(<Scoreboard />)
+    const addLeftPoint = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 1',
+    })
+    const addRightPoint = screen.getByRole('button', {
+      name: 'Add a point to Player / Team 2',
+    })
+
+    await user.click(addLeftPoint)
+    await user.click(addLeftPoint)
+    await user.click(screen.getByRole('button', { name: 'Next game' }))
+    await user.click(addRightPoint)
+    await user.click(addRightPoint)
+    await user.click(screen.getByRole('button', { name: 'Next game' }))
+    await user.click(screen.getByRole('button', { name: 'Open center menu' }))
+    await user.click(screen.getByRole('button', { name: 'Match settings' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Decrease games to win' }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Decrease games to win' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(addLeftPoint).toBeEnabled()
+    expect(addRightPoint).toBeEnabled()
   })
 
   it('persists the raised history circle across remounts', async () => {

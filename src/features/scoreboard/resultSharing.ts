@@ -2,6 +2,7 @@ import type { CompletedSet, MatchPhase } from './scoreboard.types'
 
 export interface ResultShareData {
   completedSet: CompletedSet
+  completedSets: CompletedSet[]
   leftSetsWon: number
   phase: Exclude<MatchPhase, 'playing'>
   rightSetsWon: number
@@ -62,7 +63,7 @@ export function createResultImage(data: ResultShareData): Promise<Blob> {
     return Promise.reject(new Error('Canvas is unavailable'))
   }
 
-  const { completedSet, leftSetsWon, phase, rightSetsWon } = data
+  const { completedSet, completedSets, leftSetsWon, phase, rightSetsWon } = data
   const { winnerName } = getWinnerData(data)
 
   context.fillStyle = '#fffdf7'
@@ -137,7 +138,7 @@ export function createResultImage(data: ResultShareData): Promise<Blob> {
     context,
     completedSet.leftName,
     285,
-    720,
+    655,
     400,
     46,
     28,
@@ -148,7 +149,7 @@ export function createResultImage(data: ResultShareData): Promise<Blob> {
     context,
     completedSet.rightName,
     795,
-    720,
+    655,
     400,
     46,
     28,
@@ -156,11 +157,29 @@ export function createResultImage(data: ResultShareData): Promise<Blob> {
   )
 
   context.fillStyle = '#20251f'
-  context.font = '700 44px Trebuchet MS, sans-serif'
-  context.fillText(`Sets won: ${leftSetsWon} - ${rightSetsWon}`, 540, 855)
+  context.font = '800 28px Trebuchet MS, sans-serif'
+  context.fillText('SET SCORES', 540, 715)
+  context.font = '700 30px Trebuchet MS, sans-serif'
+  const columnCount = Math.min(3, completedSets.length)
+  const columnWidth = 900 / Math.max(1, columnCount)
+  completedSets.forEach((set, index) => {
+    const column = index % 3
+    const row = Math.floor(index / 3)
+    const x = 90 + columnWidth / 2 + column * columnWidth
+    const y = 765 + row * 44
+    context.fillText(
+      `Set ${set.setNumber}: ${set.leftScore} - ${set.rightScore}`,
+      x,
+      y,
+      columnWidth - 20,
+    )
+  })
+
+  context.font = '700 40px Trebuchet MS, sans-serif'
+  context.fillText(`Sets won: ${leftSetsWon} - ${rightSetsWon}`, 540, 925)
   context.fillStyle = '#62665e'
   context.font = '600 28px Trebuchet MS, sans-serif'
-  context.fillText('Badminton Score Tracker', 540, 970)
+  context.fillText('Badminton Score Tracker', 540, 995)
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {

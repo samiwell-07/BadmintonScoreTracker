@@ -7,10 +7,15 @@ import {
 } from 'react'
 import { ArrowUpDown, X } from 'lucide-react'
 import {
+  COURT_ASPECT_RATIO,
   clampCourtPosition,
+  clampCourtWidth,
   getServeFlight,
   loadCourtPosition,
+  loadCourtWidth,
   saveCourtPosition,
+  saveCourtWidth,
+  snapCourtPosition,
   type CourtPosition,
   type ServeFlight,
   type CourtViewModel,
@@ -31,6 +36,18 @@ interface DragState {
   startX: number
   startY: number
   width: number
+}
+
+interface PointerPoint {
+  x: number
+  y: number
+}
+
+interface PinchState {
+  initialDistance: number
+  initialWidth: number
+  lastPosition: CourtPosition
+  lastWidth: number
 }
 
 interface ServiceCourtProps {
@@ -178,7 +195,6 @@ function ExpandedCourt({
               onClick={() => onSwapPlayers(side)}
             >
               <ArrowUpDown aria-hidden="true" />
-              <span className="service-court__tooltip">Swap positions</span>
             </button>
           ))}
         </>
@@ -277,6 +293,9 @@ function ExpandedCourt({
 
 export function ServiceCourt(props: ServiceCourtProps) {
   const [position, setPosition] = useState(loadCourtPosition)
+  const [courtWidth, setCourtWidth] = useState(() =>
+    loadCourtWidth(window.innerWidth),
+  )
   const [isDragging, setIsDragging] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState<SelectedPlayer | null>(null)
@@ -285,7 +304,9 @@ export function ServiceCourt(props: ServiceCourtProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLElement>(null)
   const flightIdRef = useRef(0)
+  const activePointersRef = useRef(new Map<number, PointerPoint>())
   const dragRef = useRef<DragState | null>(null)
+  const pinchRef = useRef<PinchState | null>(null)
   const suppressClickRef = useRef(false)
   const description = describeCourt(props)
 
@@ -301,12 +322,19 @@ export function ServiceCourt(props: ServiceCourtProps) {
 
   useEffect(() => {
     const handleResize = () => {
-      const bounds = miniCourtRef.current?.getBoundingClientRect()
-      if (!bounds) return
-      setPosition((current) => {
-        const next = clampPosition(current, bounds.width, bounds.height)
-        saveCourtPosition(next)
-        return next
+      setCourtWidth((currentWidth) => {
+        const nextWidth = clampCourtWidth(currentWidth, window.innerWidth)
+        setPosition((currentPosition) => {
+          const nextPosition = clampPosition(
+            currentPosition,
+            nextWidth,
+            nextWidth / COURT_ASPECT_RATIO,
+          )
+          saveCourtPosition(nextPosition)
+          return nextPosition
+        })
+        saveCourtWidth(nextWidth)
+        return nextWidth
       })
     }
 
@@ -381,11 +409,33 @@ export function ServiceCourt(props: ServiceCourtProps) {
   }
 
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
-    if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) {
+    if (event.pointerType === 'mouse' && event.button !== 0) {
       return
     }
 
     event.stopPropagation()
+    activePointersRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    })
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+
+    if (event.pointerType === 'touch' && activePointersRef.current.size === 2) {
+      const [first, second] = [...activePointersRef.current.values()]
+      dragRef.current = null
+      pinchRef.current = {
+        initialDistance: Math.hypot(second.x - first.x, second.y - first.y),
+        initialWidth: courtWidth,
+        lastPosition: position,
+        lastWidth: courtWidth,
+      }
+      suppressClickRef.current = true
+      setIsDragging(false)
+      return
+    }
+
+    if (!event.isPrimary || activePointersRef.current.size !== 1) return
+
     const bounds = event.currentTarget.getBoundingClientRect()
     dragRef.current = {
       hasDragged: false,
@@ -398,10 +448,39 @@ export function ServiceCourt(props: ServiceCourtProps) {
       startY: event.clientY,
       width: bounds.width,
     }
-    event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!activePointersRef.current.has(event.pointerId)) return
+    activePointersRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    })
+
+    const pinch = pinchRef.current
+    if (pinch && activePointersRef.current.size >= 2) {
+      event.preventDefault()
+      event.stopPropagation()
+      const [first, second] = [...activePointersRef.current.values()]
+      const distance = Math.hypot(second.x - first.x, second.y - first.y)
+      if (pinch.initialDistance <= 0) return
+
+      const nextWidth = clampCourtWidth(
+        pinch.initialWidth * (distance / pinch.initialDistance),
+        window.innerWidth,
+      )
+      const nextPosition = clampPosition(
+        pinch.lastPosition,
+        nextWidth,
+        nextWidth / COURT_ASPECT_RATIO,
+      )
+      pinch.lastWidth = nextWidth
+      pinch.lastPosition = nextPosition
+      setCourtWidth(nextWidth)
+      setPosition(nextPosition)
+      return
+    }
+
     const drag = dragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
 
@@ -428,19 +507,45 @@ export function ServiceCourt(props: ServiceCourtProps) {
   }
 
   const handlePointerUp = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!activePointersRef.current.has(event.pointerId)) return
+    event.stopPropagation()
+
+    const pinch = pinchRef.current
+    if (pinch) {
+      activePointersRef.current.delete(event.pointerId)
+      suppressClickRef.current = true
+      saveCourtWidth(pinch.lastWidth)
+      saveCourtPosition(pinch.lastPosition)
+      pinchRef.current = null
+      return
+    }
+
     const drag = dragRef.current
+    activePointersRef.current.delete(event.pointerId)
     if (!drag || drag.pointerId !== event.pointerId) return
 
-    event.stopPropagation()
     if (drag.hasDragged) {
       suppressClickRef.current = true
-      saveCourtPosition(drag.lastPosition)
+      const nextPosition = snapCourtPosition(
+        drag.lastPosition,
+        { width: window.innerWidth, height: window.innerHeight },
+        { width: drag.width, height: drag.height },
+      )
+      setPosition(nextPosition)
+      saveCourtPosition(nextPosition)
     }
     dragRef.current = null
     setIsDragging(false)
   }
 
-  const handlePointerCancel = () => {
+  const handlePointerCancel = (event: PointerEvent<HTMLButtonElement>) => {
+    activePointersRef.current.delete(event.pointerId)
+    if (pinchRef.current) {
+      saveCourtWidth(pinchRef.current.lastWidth)
+      saveCourtPosition(pinchRef.current.lastPosition)
+      suppressClickRef.current = true
+    }
+    pinchRef.current = null
     dragRef.current = null
     setIsDragging(false)
   }
@@ -449,6 +554,17 @@ export function ServiceCourt(props: ServiceCourtProps) {
     if (suppressClickRef.current) {
       suppressClickRef.current = false
       return
+    }
+
+    const server = props.model.cells.find((cell) => cell.isServer)
+    if (server) {
+      flightIdRef.current += 1
+      setFlight({
+        id: flightIdRef.current,
+        ...getServeFlight(server.side, server.row),
+      })
+    } else {
+      setFlight(null)
     }
     setIsExpanded(true)
   }
@@ -485,8 +601,12 @@ export function ServiceCourt(props: ServiceCourtProps) {
         ref={miniCourtRef}
         type="button"
         className={`service-court-widget${isDragging ? ' service-court-widget--dragging' : ''}`}
-        style={{ left: `${position.x * 100}%`, top: `${position.y * 100}%` }}
-        aria-label={`Visual service court. ${description} Press to expand; drag or use arrow keys to move.`}
+        style={{
+          left: `${position.x * 100}%`,
+          top: `${position.y * 100}%`,
+          width: `${courtWidth}px`,
+        }}
+        aria-label={`Visual service court. ${description} Press to expand; drag or use arrow keys to move; pinch with two fingers to resize.`}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         onPointerCancel={handlePointerCancel}

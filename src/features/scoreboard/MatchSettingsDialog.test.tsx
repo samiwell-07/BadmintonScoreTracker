@@ -73,6 +73,37 @@ describe('match settings', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
+  it('keeps Games to win editable while point settings are locked', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(
+      <MatchSettingsDialog
+        isLocked
+        settings={DEFAULT_MATCH_SETTINGS}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Decrease points to win' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Increase games to win' }),
+    ).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Increase games to win' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    expect(onSave).toHaveBeenCalledWith({
+      ...DEFAULT_MATCH_SETTINGS,
+      gamesToWin: 3,
+    })
+  })
+
   it('saves the screen-awake preference', async () => {
     const user = userEvent.setup()
     const onSaveGeneralSettings = vi.fn()

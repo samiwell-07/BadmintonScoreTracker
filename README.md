@@ -47,9 +47,9 @@ General settings also controls serving indicators:
 - **Raise bottom half circle** is off by default. Enable it to move the set-history and archive-back controls fully above mobile system navigation bars.
 - **Team serve indicator** is on by default and shows the yellow dot beside the serving team.
 - **Player serve indicator** is off by default. Enable it to replace each team heading with two large, vertically stacked player names and automatically show the visual service court. Press either name to edit it directly; the same yellow dot appears beside the exact serving player.
-- To initialize doubles service, use **Select serving team**, choose each team’s player on the left/odd-score court, then choose the current server. The app tracks later server and court rotations automatically.
+- Player positions are randomized within each team when the court is initialized. Use the expanded court's swap buttons if either pair is standing in the opposite order, then use **Select serving team** to choose the eligible current server. The app tracks later server and court rotations automatically.
 
-Drag the small court anywhere on the scoreboard; its responsive position is remembered. Press it to open a larger court, then press the close icon, the backdrop, or Escape to return. Arrow keys move the focused mini-court for keyboard users. After doubles positions are initialized, the expanded court lets you swap either team’s players, select any player, and press the shuttlecock to position that player legally and assign service.
+Drag the small court anywhere on the scoreboard; releasing near a corner or the middle line snaps it into place. Pinch with two fingers to resize it without opening it. Its responsive position and size are remembered. Press it to open a larger court, then press the close icon, the backdrop, or Escape to return. Arrow keys move the focused mini-court for keyboard users. The expanded court lets you swap either team’s players, select any player, and press the shuttlecock to position that player legally and assign service. Opening it with a server already selected immediately shows the serve flight.
 
 In Player mode, results, set history, copied text, and shared images identify each side with both names, such as **Samuel and Alex**.
 
@@ -69,14 +69,14 @@ Adding a point moves service to the scoring side. Successfully removing a point 
 - A winning point freezes scoring and shows the winner, final score, and sets won.
 - Use **Undo winning point** to correct the result, or **Next game** to continue the match.
 - Use **Copy text** to copy a message-ready narrative result without an image or internet connection.
-- Use **Share image** to create a square PNG result card and open the device share sheet. If native image sharing is unavailable, the PNG downloads instead.
+- Use **Share image** to create a square PNG result card with every completed set's point score and open the device share sheet. If native image sharing is unavailable, the PNG downloads instead.
 - Reaching the configured games-to-win target completes and freezes the match.
 - After closing the final result, press the **Match complete** message to reopen it and start a new match.
 - Live scores, names, service, and completed sets are remembered across refreshes.
 
 After the first completed set, a half-circle appears at the bottom center. Press it to open the chronological set history. Selecting a set shows its final names and scores on a read-only board; press the back-arrow half-circle to return.
 
-Match settings lock after the first point and remain locked while completed sets exist. Reset clears the current game by default. Enable **Also reset completed sets** to clear the entire match history and unlock settings; this option is required after a completed match.
+Point settings lock after the first point and remain locked while completed sets exist. **Games to win** remains editable throughout the match and applies immediately. Reset clears the current game by default. Enable **Also reset completed sets** to clear the entire match history and unlock point settings; this option is required after a completed match.
 
 ## Commands
 

@@ -38,6 +38,7 @@ const SHARE_LABELS: Record<ShareStatus, string> = {
 
 interface GameResultDialogProps {
   completedSet: CompletedSet
+  completedSets: CompletedSet[]
   leftSetsWon: number
   phase: Exclude<MatchPhase, 'playing'>
   rightSetsWon: number
@@ -51,6 +52,7 @@ interface GameResultDialogProps {
 
 export function GameResultDialog({
   completedSet,
+  completedSets,
   leftSetsWon,
   phase,
   rightSetsWon,
@@ -71,6 +73,7 @@ export function GameResultDialog({
   const isMatchWon = phase === 'matchWon'
   const shareData: ResultShareData = {
     completedSet,
+    completedSets,
     leftSetsWon,
     phase,
     rightSetsWon,

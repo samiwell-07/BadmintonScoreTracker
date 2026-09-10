@@ -45,7 +45,7 @@ test('publishes installable branding for browsers and home screens', async ({ pa
   )
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
     'content',
-    '#087f75',
+    '#000000',
   )
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
     'href',
@@ -58,6 +58,7 @@ test('publishes installable branding for browsers and home screens', async ({ pa
     name: string
     short_name: string
     display: string
+    theme_color: string
     icons: Array<{
       src: string
       sizes: string
@@ -69,6 +70,7 @@ test('publishes installable branding for browsers and home screens', async ({ pa
     name: 'Badminton Score Tracker',
     short_name: 'Badminton',
     display: 'standalone',
+    theme_color: '#000000',
   })
   expect(manifest.icons).toEqual([
     expect.objectContaining({ sizes: '192x192', purpose: 'any' }),
@@ -87,6 +89,48 @@ test('publishes installable branding for browsers and home screens', async ({ pa
     expect(iconResponse.ok()).toBe(true)
     expect(iconResponse.headers()['content-type']).toContain('image/png')
   }
+})
+
+test('shows the startup splash and preserves scores across refresh', async ({ page }) => {
+  await initializeBrowserState(page, { dismissTutorial: true })
+  await page.setViewportSize({ width: 412, height: 915 })
+  await page.goto('/')
+
+  const splash = page.getByRole('status', {
+    name: 'Loading Badminton Score Tracker',
+  })
+  await expect(splash).toBeVisible()
+  await expect(splash.locator('img')).toHaveAttribute(
+    'src',
+    '/icons/app-icon-512.png',
+  )
+  await expect(splash.getByRole('heading', {
+    name: 'Badminton Score Tracker',
+  })).toBeVisible()
+  const credit = splash.getByText('Developed by Samuel Srouji')
+  await expect(credit).toBeVisible()
+  const creditBounds = await credit.boundingBox()
+  expect(creditBounds).not.toBeNull()
+  expect(creditBounds!.y + creditBounds!.height).toBeLessThanOrEqual(895)
+  expect(creditBounds!.y).toBeGreaterThan(840)
+  await expect(page.getByRole('main', {
+    name: 'Badminton score tracker',
+  })).toHaveCount(0)
+
+  await expect(splash).toHaveCount(0, { timeout: 4000 })
+  const addLeftPoint = page.getByRole('button', {
+    name: 'Add a point to Player / Team 1',
+  })
+  await addLeftPoint.click()
+  await expect(page.getByLabel('Player / Team 1 score')).toHaveText('1')
+
+  await page.reload()
+  await expect(splash).toBeVisible()
+  await expect(page.getByRole('main', {
+    name: 'Badminton score tracker',
+  })).toHaveCount(0)
+  await expect(splash).toHaveCount(0, { timeout: 4000 })
+  await expect(page.getByLabel('Player / Team 1 score')).toHaveText('1')
 })
 
 test('scores and exercises the main match controls', async ({ page }) => {
@@ -162,6 +206,34 @@ test('completes a multi-set match and recovers the new-match action', async ({ p
   await expect(page.getByLabel('Player / Team 1 score')).toHaveText('0')
   await expect(page.getByLabel('Player / Team 2 score')).toHaveText('0')
   await expect(page.getByRole('button', { name: 'Open set history' })).toHaveCount(0)
+})
+
+test('changes Games to win while the current set is in progress', async ({ page }) => {
+  await initializeBrowserState(page, { dismissTutorial: true, quickMatch: true })
+  await page.goto('/')
+
+  const scoreLeft = page.getByRole('button', {
+    name: 'Add a point to Player / Team 1',
+  })
+  await scoreLeft.click()
+  await page.getByRole('button', { name: 'Open center menu' }).click()
+  await page.getByRole('button', { name: 'Match settings' }).click()
+
+  const settingsDialog = page.getByRole('dialog', { name: 'Settings' })
+  await expect(settingsDialog.getByRole('button', {
+    name: 'Increase points to win',
+  })).toBeDisabled()
+  await expect(settingsDialog.getByRole('button', {
+    name: 'Increase games to win',
+  })).toBeEnabled()
+  await settingsDialog.getByRole('button', {
+    name: 'Increase games to win',
+  }).click()
+  await settingsDialog.getByRole('button', { name: 'Save settings' }).click()
+
+  await scoreLeft.click()
+  await expect(page.getByRole('button', { name: 'Next game' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'New match' })).toHaveCount(0)
 })
 
 test('offers the shortened tutorial', async ({ page }) => {
@@ -244,11 +316,16 @@ test('moves, expands, and updates the visual service court', async ({ page }) =>
       }),
     )
   })
+  await page.addInitScript(() => {
+    Math.random = () => 0.1
+  })
   await page.reload()
 
   let court = page.getByRole('button', {
     name: /Visual service court.*No server selected/,
   })
+  await expect(court).toContainText('Player 1')
+  await expect(court).toContainText('Player 2')
   const initialBounds = await court.boundingBox()
   expect(initialBounds).not.toBeNull()
   if (!initialBounds) return
@@ -288,16 +365,81 @@ test('moves, expands, and updates the visual service court', async ({ page }) =>
   expect(mobileBounds!.x + mobileBounds!.width).toBeLessThanOrEqual(382)
   expect(mobileBounds!.y + mobileBounds!.height).toBeLessThanOrEqual(836)
 
+  await court.evaluate((element) => {
+    element.setPointerCapture = () => undefined
+  })
+  await court.dispatchEvent('pointerdown', {
+    clientX: 100,
+    clientY: 100,
+    isPrimary: true,
+    pointerId: 1,
+    pointerType: 'touch',
+  })
+  await court.dispatchEvent('pointerdown', {
+    clientX: 180,
+    clientY: 100,
+    isPrimary: false,
+    pointerId: 2,
+    pointerType: 'touch',
+  })
+  await court.dispatchEvent('pointermove', {
+    clientX: 260,
+    clientY: 100,
+    isPrimary: false,
+    pointerId: 2,
+    pointerType: 'touch',
+  })
+  await court.dispatchEvent('pointerup', {
+    clientX: 260,
+    clientY: 100,
+    isPrimary: false,
+    pointerId: 2,
+    pointerType: 'touch',
+  })
+  await court.dispatchEvent('pointerup', {
+    clientX: 100,
+    clientY: 100,
+    isPrimary: true,
+    pointerId: 1,
+    pointerType: 'touch',
+  })
+  await court.dispatchEvent('click')
+  await expect(page.getByRole('dialog', { name: 'Service court' })).toHaveCount(0)
+  await expect.poll(async () => (await court.boundingBox())?.width ?? 0)
+    .toBeCloseTo(288, 0)
+  await expect.poll(async () => page.evaluate(() =>
+    localStorage.getItem('badminton-score-tracker:service-court-width:v1'),
+  )).toBe('288')
+
+  const resizedBounds = await court.boundingBox()
+  expect(resizedBounds).not.toBeNull()
+  if (!resizedBounds) return
+  await page.mouse.move(
+    resizedBounds.x + resizedBounds.width / 2,
+    resizedBounds.y + resizedBounds.height / 2,
+  )
+  await page.mouse.down()
+  await page.mouse.move(215, resizedBounds.y + resizedBounds.height / 2)
+  await page.mouse.up()
+  await expect.poll(async () => {
+    const bounds = await court.boundingBox()
+    return bounds ? bounds.x + bounds.width / 2 : 0
+  }).toBeCloseTo(195, 0)
+
   await court.click()
   await expect(page.getByRole('dialog', { name: 'Service court' })).toBeVisible()
   await page.getByRole('button', { name: 'Close service court' }).click()
 
   await page.getByRole('button', { name: 'Open center menu' }).click()
   await page.getByRole('button', { name: 'Select serving team' }).click()
-  await page.getByRole('button', { name: 'Select Player 1 of Player / Team 1' }).click()
-  await page.getByRole('button', { name: 'Select Player 2 of Player / Team 2' }).click()
   await page.getByRole('button', { name: 'Select Player 2 of Player / Team 1' }).click()
   await page.getByRole('button', { name: /Visual service court/ }).click()
+
+  await expect(page.locator('.service-court__serve-path')).toHaveAttribute(
+    'data-flight',
+    '25-75-75-25',
+  )
+  await expect(page.getByText('Swap positions')).toHaveCount(0)
 
   const expandedCourt = page.locator('.service-court__surface--expanded')
   const leftTop = expandedCourt.locator('.service-court__cell--left-top')
@@ -350,6 +492,49 @@ test('moves, expands, and updates the visual service court', async ({ page }) =>
       name: /Visual service court.*Player 2 of Player \/ Team 1 is serving from the top court/,
     }),
   ).toBeVisible()
+})
+
+test('applies local player and team naming presets without resetting scores', async ({ page }) => {
+  await initializeBrowserState(page, { dismissTutorial: true })
+  await page.goto('/')
+
+  await page.getByRole('button', {
+    name: 'Add a point to Player / Team 1',
+  }).click()
+  await expect(page.getByLabel('Player / Team 1 score')).toHaveText('1')
+
+  await Promise.all([
+    page.waitForEvent('domcontentloaded'),
+    page.keyboard.type('addplayer'),
+  ])
+
+  await expect(page.getByRole('button', {
+    name: 'Edit 1 for Player / Team 1',
+  })).toBeVisible()
+  await expect(page.getByRole('button', {
+    name: 'Edit 2 for Player / Team 1',
+  })).toBeVisible()
+  await expect(page.getByRole('button', {
+    name: 'Edit 3 for Player / Team 2',
+  })).toBeVisible()
+  await expect(page.getByRole('button', {
+    name: 'Edit 4 for Player / Team 2',
+  })).toBeVisible()
+  await expect(page.getByLabel('Player / Team 1 score')).toHaveText('1')
+  await expect(page.getByRole('button', {
+    name: /Visual service court/,
+  })).toBeVisible()
+
+  await Promise.all([
+    page.waitForEvent('domcontentloaded'),
+    page.keyboard.type('addteam'),
+  ])
+
+  await expect(page.getByRole('button', { name: '1', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '2', exact: true })).toBeVisible()
+  await expect(page.getByLabel('1 score')).toHaveText('1')
+  await expect(page.getByRole('button', { name: /Visual service court/ }))
+    .toHaveCount(0)
 })
 
 test('reloads offline with saved match state', async ({ context, page }) => {
